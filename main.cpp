@@ -10,6 +10,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 class context_t {
+	friend class coroutine_t;
 protected:
 	ucontext_t m_ctx;
 public:
@@ -18,24 +19,35 @@ public:
 	void save() { getcontext(&m_ctx); }
 };
 
-class stack_context_t : public context_t {
-	static std::function<void()> *next;
-	static void cb() { auto n = next; next = nullptr; (*n)(); }
+class coroutine_t : public context_t {
+	static coroutine_t *next;
+	static void cb() { next->run(); }
 
 	char m_stack[SIGSTKSZ];
+	std::function<void()> *f;
 
-public:
-	void spawn(std::function<void()> *f, context_t *ctx) {
+	void run() {
+		(*f)();
+		delete this;
+		printf("Coroutine be done\n");
+	}
+
+	coroutine_t(std::function<void()> *_f, context_t *ctx) : f(_f) {
 		save();
-		// m_ctx.uc_link = NULL; // TODO
+		m_ctx.uc_link = &ctx->m_ctx;
 		m_ctx.uc_stack.ss_sp = m_stack;
 		m_ctx.uc_stack.ss_size = sizeof(m_stack);
 		makecontext(&m_ctx, cb, 0);
-		next = f;
+		next = this;
 		swap(ctx);
 	}
+
+public:
+	static void spawn(std::function<void()> *f, context_t *ctx) {
+		new coroutine_t(f, ctx);
+	}
 };
-std::function<void()> *stack_context_t::next = nullptr;
+coroutine_t *coroutine_t::next = nullptr;
 #pragma clang diagnostic pop;
 
 class loop_t : public context_t {
@@ -59,10 +71,8 @@ public:
 		t->yield(this);
 	}
 
-	void fork(std::function<void()> f) {
-		// TODO: memory manage me?
-		auto t = new stack_context_t();
-		t->spawn(&f, this);
+	void spawn(std::function<void()> f) {
+		coroutine_t::spawn(&f, this);
 	}
 
 	void sleep(unsigned int seconds) {
@@ -82,8 +92,9 @@ void still_alive(const char name[]) {
 
 
 int main() {
-	loop.fork([&](){ still_alive("Foo"); });
-	loop.fork([&](){ still_alive("Bar"); });
+	loop.spawn([&](){ still_alive("Foo"); });
+	loop.spawn([&](){ still_alive("Bar"); });
+	loop.spawn([&](){ loop.sleep(1); });
 
 	loop.run();
 }
