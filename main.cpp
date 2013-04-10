@@ -118,38 +118,44 @@ public:
 	}
 };
 
-loop_t __loop;
+namespace A {
+	loop_t loop;
+}
+void asleep(int seconds) { A::loop.sleep(seconds); }
+
 rendezvous_t * const __r = nullptr;
 
-#define A(stmt) __loop.spawn([&](){ stmt; }, __r)
+#define A(stmt) A::loop.spawn([&](){ stmt; }, __r)
+#define await rendezvous_t _r(&A::loop); auto *__r = &_r;
 
 void still_alive(const char name[]) {
 	for (;;) {
 		printf("Still alive: %s\n", name);
-		__loop.sleep(1);
+		asleep(1);
 	}
 }
 
+void printLater(int seconds, const char message[]) {
+	asleep(seconds);
+	printf("%s\n", message);
+}
+
+void amain() {
+
+	A(still_alive("Foosauce"));
+
+	printf("Before\n");
+	{ await
+		A(printLater(1, "First thing done"));
+		printf("Kicked off one thing\n");
+		A(printLater(2, "Second thing done"));
+		printf("Kicked off another thing\n");
+	}
+	printf("After\n");
+
+}
 
 int main() {
-
-	A(
-		rendezvous_t _r(&__loop); auto *__r = &_r;
-		A(still_alive("Foo"));
-		A(still_alive("Bar"));
-		A(__loop.sleep(1));
-		printf("jump to loop\n");
-		__loop.block();
-		printf("jumped to loop\n");
-	);
-
-	// A(
-	// 	A(printf("Block 1\n"); __loop.block());
-	// 	A(printf("Block 2\n"); __loop.block());
-	// 	printf("outer\n");
-	// );
-	// printf("top\n");
-	// A(__loop.block());
-
-	__loop.run();
+	A(amain());
+	A::loop.run();
 }
