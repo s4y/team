@@ -17,7 +17,12 @@ public:
 	void yield(context_t *ctx) { swapcontext(*this, *ctx); }
 	void save() { getcontext(&m_ctx); }
 	void load() { setcontext(&m_ctx); }
+	template<typename... Args> void prepare(void(cb)(), Args... args) {
+		makecontext(&m_ctx, cb, sizeof...(args), args...);
+	}
+
 };
+#pragma clang diagnostic pop;
 
 class rendezvous_t;
 
@@ -74,11 +79,10 @@ coroutine_t::coroutine_t(context_t *ctx, std::function<void()> *_f, rendezvous_t
 	save();
 	m_ctx.uc_stack.ss_sp = m_stack;
 	m_ctx.uc_stack.ss_size = sizeof(m_stack);
-	makecontext(&m_ctx, cb, 0);
+	prepare(cb);
 	next = this;
 	ctx->yield(this);
 }
-#pragma clang diagnostic pop;
 
 class loop_t : public context_t {
 
