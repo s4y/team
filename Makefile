@@ -1,4 +1,4 @@
-main: async.h main.cpp
+main: team main.cpp
 	#c++ --std=c++11 -stdlib=libc++ -g -o main main.cpp
 	c++ --std=c++11 -stdlib=libc++\
 		-Ideps/uv/include\

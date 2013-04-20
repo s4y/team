@@ -1,12 +1,11 @@
+#pragma once
+
 #define _XOPEN_SOURCE
 #include <ucontext.h>
 
 #include <queue>
-#include <stack>
 #include <functional>
 #include <uv.h>
-
-#pragma once
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -84,86 +83,3 @@ coroutine_t::coroutine_t(context_t *ctx, std::function<void()> *_f, rendezvous_t
 	next = this;
 	ctx->yield(this);
 }
-
-class loop_t : public context_t {
-
-	std::stack<context_t> m_returns;
-
-protected:
-
-	operator ucontext_t *() override {
-		return m_returns.empty() ? &m_ctx : static_cast<ucontext_t *>(m_returns.top());
-	}
-
-public:
-
-	uv_loop_t *uv;
-
-	loop_t(uv_loop_t *_uv) : uv(_uv) {}
-
-	void run() {
-		uv_run(uv, UV_RUN_DEFAULT);
-	}
-
-	void spawn(std::function<void()> f, rendezvous_t *r) {
-		m_returns.emplace();
-		coroutine_t::spawn(this, &f, r);
-		m_returns.pop();
-	}
-};
-
-template<typename T, int(*Init)(uv_loop_t*, T *handle)>
-class handle_t {
-protected:
-	static void _cb(T *handle, int status) {
-		reinterpret_cast<handle_t*>(handle->data)->cb(handle, status);
-	}
-	virtual void cb(T *handle, int status) = 0;
-
-	T m_handle;
-
-	handle_t(uv_loop_t *loop) {
-		int ret;
-		if ((ret = Init(loop, &m_handle))) {
-			// TODO: better error handling?
-			fprintf(stderr, "libuv handle init failed with %d\n", ret);
-			exit(1);
-		}
-		m_handle.data = this;
-	}
-};
-
-class timer_t : public context_t, public handle_t<uv_timer_t, uv_timer_init> {
-
-	virtual void cb(uv_timer_t *handle, int status) override {
-		m_loop->yield(this);
-	}
-
-	loop_t *m_loop;
-
-public:
-	timer_t(loop_t *loop) : handle_t(loop->uv), m_loop(loop) {}
-	void start(uint64_t msec) {
-		uv_timer_start(&m_handle, _cb, msec, 0);
-		this->yield(m_loop);
-	}
-};
-
-
-namespace A {
-	loop_t loop(uv_default_loop());
-}
-void asleep(int seconds) { timer_t(&A::loop).start(seconds * 1000); }
-
-rendezvous_t * const __r = nullptr;
-
-#define A(stmt) A::loop.spawn([&](){ stmt; }, __r)
-#define await rendezvous_t _r(&A::loop); auto *__r = &_r;
-
-void amain();
-
-int main() {
-	A(amain());
-	A::loop.run();
-}
-

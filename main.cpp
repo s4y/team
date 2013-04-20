@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
-#include "async.h"
+#include "team/async.h"
 
 void still_alive(const char name[]) {
 	for (;;) {
