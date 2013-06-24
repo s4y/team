@@ -11,7 +11,10 @@ Here's an example that works right now:
 
 ```c++
 
-void printAfterSeconds(int s, const char m[]) { asleep(s); printf("%s\n", m); }
+void printAfterSeconds(int s, const char m[]) {
+	asleep(s);
+	printf("%s\n", m);
+}
 
 void amain() {
 
@@ -40,9 +43,9 @@ Slow thing done
 After
 ```
 
-Calls blocks by default. The `A()` macro runs its contents in a new context and returns control to the caller when it finishes or blocks.
+Calls block by default. The `A()` macro runs its contents in a new context and returns control to the caller when it finishes or blocks.
 
-`twait` creates a rendezvous in the current scope. When you leave the scope, the rendezvous' destructor blocks until all of the tasks you spawned finish.
+`await` creates a rendezvous in the current scope. When you leave the scope, the rendezvous' destructor blocks until all of the tasks you spawned finish.
 
 Status: Pretty immature, about a week in.
 
