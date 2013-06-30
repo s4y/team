@@ -43,9 +43,9 @@ Slow thing done
 After
 ```
 
-Calls block by default. `A{ }` runs its contents in a new context and returns control to the caller when it finishes or blocks.
+Calls block by default. `A{ }` runs its contents asynchronously, returning control to the caller if it blocks, or when it finishes.
 
-`await` blocks until every task you spawned inside it finishes.
+`await` blocks until every asynchronous task spawned inside it finishes.
 
 Status: Pretty immature, a couple of weeks in.
 
