@@ -2,7 +2,7 @@
 
 #include "events.h"
 
-namespace A {
+namespace async {
 	loop_t loop(uv_default_loop());
 
 	struct await_t {
@@ -12,19 +12,26 @@ namespace A {
 		await_t() : done(false), r(&async::loop) {}
 		operator rendezvous_t *() { return &r; }
 	};
+
+	struct spawn_t {
+		rendezvous_t *r;
+		spawn_t(rendezvous_t *_r) : r(_r) {}
+		void operator <<(std::function<void()> f) { loop.spawn(f, r); }
+	};
 }
-void asleep(int seconds) { timer_t(&A::loop).start(seconds * 1000); }
+void asleep(int seconds) { timer_t(&async::loop).start(seconds * 1000); }
 
 rendezvous_t * const __r = nullptr;
 
-#define A(stmt) A::loop.spawn([&](){ stmt; }, __r)
+// #define A(stmt) async::loop.spawn([&](){ stmt; }, __r)
+#define A async::spawn_t(__r) << [&]()
 // #define await rendezvous_t _r(&async::loop); auto *__r = &_r;
 #define await for (async::await_t __r; !__r.done; __r.done = true)
 
 void amain();
 
 int main() {
-	A(amain());
-	A::loop.run();
+	A{ amain(); };
+	async::loop.run();
 }
 

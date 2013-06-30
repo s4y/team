@@ -16,13 +16,13 @@ void printLater(int seconds, const char message[]) {
 
 void amain() {
 
-	A(still_alive("Foosauce"));
+	A{ still_alive("Foosauce"); };
 
 	printf("Before\n");
 	await {
-		A(printLater(1, "First thing done"));
+		A{ printLater(1, "First thing done"); };
 		printf("Kicked off one thing\n");
-		A(printLater(2, "Second thing done"));
+		A{ printLater(2, "Second thing done"); };
 		printf("Kicked off another thing\n");
 	}
 	printf("After\n");
