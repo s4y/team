@@ -1,15 +1,10 @@
-I'm trying to make event loop ([libuv](https://github.com/joyent/libuv))-driven coroutines for C++ that are easy to use with minimal syntax. 
+# Team
 
-Heavy inspirations:
-
-- [Tame](https://github.com/okws/sfslite/wiki/tame)
-- [gevent](http://www.gevent.org/)
-
-I want it to work like Tame but without code transformation (except for the C++ preprocessor), and thus able to be used with libraries written in a blocking style.
-
-Here's an example:
+Event loop ([libuv](https://github.com/joyent/libuv))-driven coroutines for C++ that are easy to use with minimal syntax. Here's an example:
 
 ```c++
+
+#include <team/async.h>
 
 void printAfterSeconds(int s, const char m[]) {
 	asleep(s);
@@ -43,11 +38,18 @@ Slow thing done
 After
 ```
 
-Calls block by default. `A{ }` runs its contents asynchronously, returning control to the caller if it blocks, or when it finishes.
+Calls block, but `A{ }` runs its contents asynchronously, returning control to the caller if it blocks, or when it finishes.
 
 `await` blocks until every asynchronous task spawned inside it finishes.
 
 Status: Pretty immature, a couple of weeks in.
+
+I want it to work like Tame but without code transformation (except for the C++ preprocessor), and thus able to be used with libraries written in a blocking style.
+
+## Inspiration
+
+- [Tame](https://github.com/okws/sfslite/wiki/tame)
+- [gevent](http://www.gevent.org/)
 
 ## Notes to self
 
