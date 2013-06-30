@@ -19,7 +19,7 @@ void amain() {
 	A(still_alive("Foosauce"));
 
 	printf("Before\n");
-	{ await
+	await {
 		A(printLater(1, "First thing done"));
 		printf("Kicked off one thing\n");
 		A(printLater(2, "Second thing done"));
