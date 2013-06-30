@@ -5,7 +5,7 @@ Heavy inspirations:
 - [Tame](https://github.com/okws/sfslite/wiki/tame)
 - [gevent](http://www.gevent.org/)
 
-I want it to work like Tame but without code transformation (and thus able to be used with libraries written in a blocking style).
+I want it to work like Tame but without code transformation (except for the C++ preprocessor), and thus able to be used with libraries written in a blocking style.
 
 Here's an example:
 
