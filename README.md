@@ -7,7 +7,7 @@ Heavy inspirations:
 
 I want it to work like Tame but without code transformation (and thus able to be used with libraries written in a blocking style).
 
-Here's an example that works right now:
+Here's an example:
 
 ```c++
 
@@ -20,10 +20,10 @@ void amain() {
 
 	printf("Before\n");
 
-	{ await
-		A(printAfterSeconds(2, "Slow thing done"));
+	await {
+		A{ printAfterSeconds(2, "Slow thing done"); };
 		printf("Kicked off one thing\n");
-		A(printAfterSeconds(1, "Quick thing done"));
+		A{ printAfterSeconds(1, "Quick thing done"); };
 		printf("Kicked off another thing\n");
 	}
 
@@ -43,11 +43,11 @@ Slow thing done
 After
 ```
 
-Calls block by default. The `A()` macro runs its contents in a new context and returns control to the caller when it finishes or blocks.
+Calls block by default. `A{ }` runs its contents in a new context and returns control to the caller when it finishes or blocks.
 
-`await` creates a rendezvous in the current scope. When you leave the scope, the rendezvous' destructor blocks until all of the tasks you spawned finish.
+`await` blocks until every task you spawned inside it finishes.
 
-Status: Pretty immature, about a week in.
+Status: Pretty immature, a couple of weeks in.
 
 ## Notes to self
 
