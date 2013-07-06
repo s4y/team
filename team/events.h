@@ -1,6 +1,7 @@
 #pragma once
 
 #include "event_loop.h"
+#include <stdlib.h>
 
 template<typename T, int(*Init)(uv_loop_t*, T *handle)>
 class handle_t {
