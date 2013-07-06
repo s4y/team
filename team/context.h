@@ -27,8 +27,7 @@ public:
 class rendezvous_t;
 
 class coroutine_t : public context_t {
-	static coroutine_t *next;
-	static void cb() { next->run(); }
+	static void cb(coroutine_t *target) { target->run(); }
 
 	char m_stack[SIGSTKSZ];
 	context_t *m_parent;
@@ -37,14 +36,9 @@ class coroutine_t : public context_t {
 
 	void run();
 
-	coroutine_t(context_t *ctx, std::function<void()> *_f, rendezvous_t *r);
-
 public:
-	static void spawn(context_t *ctx, std::function<void()> *f, rendezvous_t *r) {
-		new coroutine_t(ctx, f, r);
-	}
+	coroutine_t(context_t *ctx, std::function<void()> *_f, rendezvous_t *r);
 };
-coroutine_t *coroutine_t::next = nullptr;
 
 class rendezvous_t : private context_t {
 
@@ -79,7 +73,5 @@ coroutine_t::coroutine_t(context_t *ctx, std::function<void()> *_f, rendezvous_t
 	save();
 	m_ctx.uc_stack.ss_sp = m_stack;
 	m_ctx.uc_stack.ss_size = sizeof(m_stack);
-	prepare(cb);
-	next = this;
-	ctx->yield(this);
+	prepare((void(*)())cb, this);
 }

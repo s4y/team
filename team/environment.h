@@ -15,10 +15,14 @@ protected:
 
 public:
 
-	void spawn(std::function<void()> f, rendezvous_t *r) {
+	void blockOnce(context_t *ctx) {
 		m_returns.emplace();
-		coroutine_t::spawn(this, &f, r);
+		yield(ctx);
 		m_returns.pop();
+	}
+
+	void spawn(std::function<void()> f, rendezvous_t *r) {
+		blockOnce(new coroutine_t(this, &f, r));
 	}
 };
 
