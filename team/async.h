@@ -16,7 +16,8 @@ namespace async {
 	struct spawn_t {
 		rendezvous_t *r;
 		spawn_t(rendezvous_t *_r) : r(_r) {}
-		void operator <<(std::function<void()> f) { loop.spawn(f, r); }
+		void operator <<(std::function<void()> &&f) {
+			loop.spawn(std::forward<std::function<void()>>(f), r); }
 	};
 }
 void asleep(int seconds) { timer_t(&async::loop).start(seconds * 1000); }

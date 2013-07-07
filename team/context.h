@@ -31,13 +31,13 @@ class coroutine_t : public context_t {
 
 	char m_stack[SIGSTKSZ];
 	context_t *m_parent;
-	std::function<void()> *f;
+	std::function<void()> f;
 	rendezvous_t *m_rendezvous;
 
 	void run();
 
 public:
-	coroutine_t(context_t *ctx, std::function<void()> *_f, rendezvous_t *r);
+	coroutine_t(context_t *ctx, std::function<void()> &&_f, rendezvous_t *r);
 };
 
 class rendezvous_t : private context_t {
@@ -60,14 +60,14 @@ public:
 
 void coroutine_t::run() {
 	if (m_rendezvous) m_rendezvous->inc();
-	(*f)();
+	f();
 	delete this;
 	// Isn't this bad? We just deleted our stack and ourself.
 	if (m_rendezvous) m_rendezvous->dec();
 	yield(m_parent);
 }
 
-coroutine_t::coroutine_t(context_t *ctx, std::function<void()> *_f, rendezvous_t *r) :
+coroutine_t::coroutine_t(context_t *ctx, std::function<void()> &&_f, rendezvous_t *r) :
 	m_parent(ctx), f(_f), m_rendezvous(r)
 {
 	save();

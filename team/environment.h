@@ -21,8 +21,10 @@ public:
 		m_returns.pop();
 	}
 
-	void spawn(std::function<void()> f, rendezvous_t *r) {
-		blockOnce(new coroutine_t(this, &f, r));
+	void spawn(std::function<void()> &&f, rendezvous_t *r) {
+		blockOnce(new coroutine_t(
+			this, std::forward<std::function<void()>>(f), r
+		));
 	}
 };
 
