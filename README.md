@@ -54,19 +54,20 @@ I want it to work like Tame but without code transformation (except for the C++ 
 channel<int> ch;
 
 await {
-A {
-    while (int i = ch.recv()) {
-        printf("Pong %d\n", i);
-        asleep(1);
-    }
-};
-
-A {
-    for (int i = 5; i--;) {
-        printf("Ping %d\n", i);
-        ch.send(i);
-    }
-};
+    A {
+        while (int i = ch.recv()) {
+            printf("Pong %d\n", i);
+            asleep(1);
+        }
+    };
+    
+    A {
+        for (int i = 5; i--;) {
+            printf("Ping %d\n", i);
+            ch.send(i);
+        }
+    };
+}
 ```
 
 
