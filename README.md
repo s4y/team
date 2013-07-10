@@ -46,6 +46,30 @@ Status: Pretty immature, a couple of weeks in.
 
 I want it to work like Tame but without code transformation (except for the C++ preprocessor), and thus able to be used with libraries written in a blocking style.
 
+## More examples
+
+[Clojure/Go-style channels](http://blog.drewolson.org/blog/2013/07/04/clojure-core-dot-async-and-go-a-code-comparison/) (WIP):
+
+```c++
+channel<int> ch;
+
+await {
+A {
+    while (int i = ch.recv()) {
+        printf("Pong %d\n", i);
+        asleep(1);
+    }
+};
+
+A {
+    for (int i = 5; i--;) {
+        printf("Ping %d\n", i);
+        ch.send(i);
+    }
+};
+```
+
+
 ## Inspiration
 
 - [Tame](https://github.com/okws/sfslite/wiki/tame)
