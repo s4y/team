@@ -1,10 +1,13 @@
-main: team main.cpp
-	#c++ --std=c++11 -stdlib=libc++ -g -o main main.cpp
+EXAMPLES = $(patsubst examples%.cpp,bin%,$(wildcard examples/*.cpp))
+
+examples: $(EXAMPLES)
+
+bin/%: examples/%.cpp team
 	c++ --std=c++11 -stdlib=libc++\
+		-I.\
 		-Ideps/uv/include\
 		-framework CoreFoundation\
 		-framework CoreServices\
 		deps/uv/libuv.a\
-		main.cpp\
 		-g\
-		-o main
+		-o $@ $<
