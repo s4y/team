@@ -19,6 +19,52 @@ namespace async {
 		void operator <<(std::function<void()> &&f) {
 			loop.spawn(std::forward<std::function<void()>>(f), r); }
 	};
+
+	// High-level async constructs
+
+	class fence {
+		context_t ctx;
+		public:
+		~fence() { loop.blockOnce(&ctx); }
+		void wait() { ctx.yield(&loop); }
+	};
+
+	template <typename T>
+	class channel {
+
+		std::queue<T> values;
+		size_t max_size;
+
+		std::queue<fence> senders;
+		std::queue<fence> receivers;
+
+		public:
+		channel() : max_size(0) {}
+		channel(size_t _max_size) : max_size(_max_size) {}
+
+		template <typename Val>
+		void send(Val &&v) {
+			while (max_size && values.size() == max_size) {
+				senders.emplace();
+				senders.back().wait();
+			}
+
+			values.push(std::forward<Val>(v));
+			if (!receivers.empty()) { receivers.pop(); }
+		}
+
+		T recv() {
+			while (!values.size()) {
+				receivers.emplace();
+				receivers.back().wait();
+			}
+			auto ret = values.front();
+			values.pop();
+			if (!senders.empty()) { senders.pop(); }
+			return ret;
+		}
+	};
+
 }
 void asleep(int seconds) { timer_t(&async::loop).start(seconds * 1000); }
 
