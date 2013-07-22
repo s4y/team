@@ -65,6 +65,72 @@ namespace async {
 		}
 	};
 
+	template <typename T>
+	class generator {
+		channel<T> channel;
+
+		coroutine_t *gen;
+		bool running;
+		context_t ctx;
+
+		protected:
+
+		template<typename V>
+		void yield(V&& v){ channel.send(std::forward<V>(v)); }
+
+		virtual void gen_impl() = 0;
+
+		public:
+
+		generator() : channel(1), running(false), gen(
+			new coroutine_t(&loop, std::bind(&generator::gen_impl, this), nullptr)
+		) { }
+
+		T operator()() {
+			if (!running) {
+				running = true;
+				loop.blockOnce(gen);
+			}
+			return channel.recv();
+		}
+	};
+
+	namespace util {
+
+		// Based on http://stackoverflow.com/a/7943765/84745 by KennyTM
+		template <typename T>
+		struct arg_type : public arg_type<decltype(&T::operator())> {};
+
+		template <typename C, typename R, typename... Args>
+		struct arg_type<R(C::*)(Args...) const> {
+			typedef typename std::tuple_element<0, std::tuple<Args...>>::type type;
+		};
+
+		template <typename T> using cb_type = typename arg_type<typename arg_type<T>::type>::type;
+	}
+
+	template<typename F>
+	class lambda_generator : public generator<util::cb_type<F>> {
+		F f;
+		public:
+		lambda_generator(F&& _f) : f(std::forward<F>(_f)) {}
+		protected:
+
+		class yield_t {
+			lambda_generator &g;
+			public:
+			template<typename V>
+			void operator()(V&& v) { g.yield(std::forward<V>(v)); }
+			yield_t(lambda_generator &_g) : g(_g) {}
+		};
+
+		virtual void gen_impl() override { f(yield_t(*this)); }
+	};
+
+	template<typename F>
+	lambda_generator<F> make_generator(F&& f) {
+		return lambda_generator<F>(std::forward<F>(f));
+	}
 }
 void asleep(int seconds) { timer_t(&async::loop).start(seconds * 1000); }
 
