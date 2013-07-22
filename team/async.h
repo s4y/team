@@ -127,6 +127,8 @@ namespace async {
 		virtual void gen_impl() override { f(yield_t(*this)); }
 	};
 
+	template <typename T> using yield = std::function<void(T)>;
+
 	template<typename F>
 	lambda_generator<F> make_generator(F&& f) {
 		return lambda_generator<F>(std::forward<F>(f));

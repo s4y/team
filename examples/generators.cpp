@@ -3,7 +3,7 @@
 
 void amain() {
 
-	auto fib = generator [](std::function<void(unsigned int)> yield) {
+	auto fib = generator [](async::yield<unsigned int> yield) {
 		unsigned int a, b;
 		yield((a = 0));
 		yield((b = 1));
