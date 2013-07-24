@@ -141,7 +141,7 @@ namespace async {
 		}
 	} make_gen{};
 }
-void asleep(int seconds) { timer_t(&async::loop).start(seconds * 1000); }
+void asleep(int seconds) { async::timer(&async::loop).start(seconds * 1000); }
 
 rendezvous_t * const __r = nullptr;
 
