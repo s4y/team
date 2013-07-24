@@ -13,16 +13,17 @@ protected:
 	}
 	virtual void cb(CT *handle, int status) = 0;
 
-	T m_handle;
+	T *m_handle;
 
-	handle(uv_loop_t *loop) {
+	handle(uv_loop_t *loop) : m_handle(new T) {
 		int ret;
-		if ((ret = Init(loop, &m_handle))) {
+		if ((ret = Init(loop, m_handle))) {
 			fprintf(stderr, "libuv handle init failed with %d\n", ret);
 			exit(1);
 		}
-		m_handle.data = this;
+		m_handle->data = this;
 	}
+	~handle() { uv_close((uv_handle_t*)m_handle, [](uv_handle_t *h){ delete h; }); }
 };
 
 class timer : public context_t, public handle<uv_timer_t, uv_timer_init> {
@@ -36,7 +37,7 @@ class timer : public context_t, public handle<uv_timer_t, uv_timer_init> {
 public:
 	timer(loop_t *loop) : handle(loop->uv), m_loop(loop) {}
 	void start(uint64_t msec) {
-		uv_timer_start(&m_handle, _cb, msec, 0);
+		uv_timer_start(m_handle, _cb, msec, 0);
 		this->yield(m_loop);
 	}
 };
