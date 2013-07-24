@@ -58,7 +58,7 @@ namespace async {
 				receivers.emplace();
 				receivers.back().wait();
 			}
-			auto ret = values.front();
+			auto ret = std::move(values.front());
 			values.pop();
 			if (!senders.empty()) { senders.pop(); }
 			return ret;
