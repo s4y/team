@@ -29,14 +29,29 @@ namespace async {
 		void wait() { ctx.yield(&loop); }
 	};
 
+	class fence_queue {
+		std::queue<std::unique_ptr<fence>> q;
+
+		public:
+		void push() { q.emplace(new fence); q.back()->wait(); }
+		void maybe_pop() {
+			if (q.empty()) return;
+			// The fence will be destroyed when *after* it's been removed from
+			// the queue. Else, we'll yield to the fence inside queues.pop()
+			// and it may destroy us and reenter the fence's destructor
+			auto fence = std::move(q.front());
+			q.pop();
+		}
+	};
+
 	template <typename T>
 	class channel {
 
 		std::queue<T> values;
 		size_t max_size;
 
-		std::queue<fence> senders;
-		std::queue<fence> receivers;
+		fence_queue senders;
+		fence_queue receivers;
 
 		public:
 		channel() : max_size(0) {}
@@ -45,22 +60,20 @@ namespace async {
 		template <typename Val>
 		void send(Val &&v) {
 			while (max_size && values.size() == max_size) {
-				senders.emplace();
-				senders.back().wait();
+				senders.push();
 			}
 
 			values.push(std::forward<Val>(v));
-			if (!receivers.empty()) { receivers.pop(); }
+			receivers.maybe_pop();
 		}
 
 		T recv() {
 			while (!values.size()) {
-				receivers.emplace();
-				receivers.back().wait();
+				receivers.push();
 			}
 			auto ret = std::move(values.front());
 			values.pop();
-			if (!senders.empty()) { senders.pop(); }
+			senders.maybe_pop();
 			return ret;
 		}
 	};
