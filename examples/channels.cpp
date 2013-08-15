@@ -5,7 +5,7 @@ void worker(async::channel<int> &ch, const char *name) {
 	while (true) {
 		int i = ch.recv();
 		printf("%s working on %d\n", name, i);
-		asleep(1);
+		async::sleep(1);
 	}
 }
 

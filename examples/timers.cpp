@@ -1,29 +1,26 @@
 #include <stdio.h>
 #include <team/async.h>
 
-void still_alive(const char name[]) {
-	for (;;) {
-		printf("Still alive: %s\n", name);
-		asleep(1);
-	}
-}
+using async::sleep;
 
-void printLater(int seconds, const char message[]) {
-	asleep(seconds);
-	printf("%s\n", message);
+void still_alive() {
+	for (;;) {
+		printf("  Still alive\n");
+		sleep(1);
+	}
 }
 
 void amain() {
 
-	A{ still_alive("Foosauce"); };
+	A { still_alive(); };
 
-	printf("Before\n");
 	await {
-		A{ printLater(1, "First thing done"); };
+		A { sleep(3); printf("Slow thing done\n"); };
 		printf("Kicked off one thing\n");
-		A{ printLater(2, "Second thing done"); };
+		A { sleep(1); printf("Quick thing done\n"); };
 		printf("Kicked off another thing\n");
 	}
-	printf("After\n");
+
+	printf("Everything done!\n");
 
 }

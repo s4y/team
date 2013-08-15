@@ -153,8 +153,9 @@ namespace async {
 			return make_generator(std::forward<T>(f));
 		}
 	} make_gen{};
+
+	void sleep(int seconds) { timer(&loop).start(seconds * 1000); }
 }
-void asleep(int seconds) { async::timer(&async::loop).start(seconds * 1000); }
 
 rendezvous_t * const __r = nullptr;
 
