@@ -55,7 +55,7 @@ namespace async {
 
 		public:
 		channel() : max_size(0) {}
-		channel(size_t _max_size) : max_size(_max_size) {}
+		explicit channel(size_t _max_size) : max_size(_max_size) {}
 
 		template <typename Val>
 		void send(Val &&v) {
