@@ -6,23 +6,18 @@ Event loop ([libuv](https://github.com/joyent/libuv))-driven coroutines for C++ 
 
 #include <team/async.h>
 
-void printAfterSeconds(int s, const char m[]) {
-	asleep(s);
-	printf("%s\n", m);
-}
+using async::sleep
 
 void amain() {
 
-	printf("Before\n");
-
 	await {
-		A{ printAfterSeconds(2, "Slow thing done"); };
-		printf("Kicked off one thing\n");
-		A{ printAfterSeconds(1, "Quick thing done"); };
-		printf("Kicked off another thing\n");
+		A { sleep(2); printf("Slow thing done\n"); };
+		printf("Started a slow thing\n");
+		A { sleep(1); printf("Quick thing done\n"); };
+		printf("Started a quick thing\n");
 	}
 
-	printf("After\n");
+	printf("Everything done!\n");
 
 }
 ```
@@ -30,12 +25,11 @@ void amain() {
 It prints this:
 
 ```
-Before
-Kicked off one thing
-Kicked off another thing
+Started a slow thing
+Started a quick thing
 Quick thing done
 Slow thing done
-After
+Everything done!
 ```
 
 Calls block, but `A{ }` runs its contents asynchronously, returning control to the caller if it blocks, or when it finishes.
