@@ -8,16 +8,29 @@ namespace async {
 template<typename T, int(*Init)(uv_loop_t*, T *handle), typename CT = T>
 class handle {
 protected:
+
+	// template<typename C, typename CB> struct cb_t;
+	// template<typename C, void C::*CB(CT *,typename Args &&...)>
+	// struct cb_t {
+	// 	static void f(CT *handle, Args &&...args) {
+	// 		reinterpret_cast<C*>(handle->data)->*CB(std::forward<Args>(args)...);
+	// 	}
+	// };
+	// template<typename CB, typename C, typename... Args>
+	// static void _cb(CT *handle, Args&& ...args);
+
+	// //template <typename C, typename... Args, void (C::*CB)(CT *, Args...)>
+	//template <typename C, typename CB, typename... Args>
 	static void _cb(CT *handle, int status) {
 		reinterpret_cast<class handle*>(handle->data)->cb(handle, status);
 	}
+
 	virtual void cb(CT *handle, int status) = 0;
 
 	T *m_handle;
 
 	handle(uv_loop_t *loop) : m_handle(new T) {
-		int ret;
-		if ((ret = Init(loop, m_handle))) {
+		if (int ret = Init(loop, m_handle)) {
 			fprintf(stderr, "libuv handle init failed with %d\n", ret);
 			exit(1);
 		}
