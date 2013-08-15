@@ -140,19 +140,12 @@ namespace async {
 		virtual void gen_impl() override { f(yield_t(*this)); }
 	};
 
-	template <typename T> using yield = std::function<void(T)>;
+	template <typename T> using yield = typename lambda_generator<T>::yield_t;
 
 	template<typename F>
 	lambda_generator<F> make_generator(F&& f) {
 		return lambda_generator<F>(std::forward<F>(f));
 	}
-
-	const struct {
-		template<typename T>
-		auto operator<< (T &&f) const -> decltype(make_generator(std::forward<T>(f))) {
-			return make_generator(std::forward<T>(f));
-		}
-	} make_gen{};
 
 	void sleep(int seconds) { timer(&loop).start(seconds * 1000); }
 }
@@ -163,8 +156,6 @@ rendezvous_t * const __r = nullptr;
 #define A async::spawn_t(__r) << [&]()
 // #define await rendezvous_t _r(&async::loop); auto *__r = &_r;
 #define await for (async::await_t __r; !__r.done; __r.done = true)
-
-#define generator async::make_gen <<
 
 void amain();
 

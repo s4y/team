@@ -3,7 +3,7 @@
 
 void amain() {
 
-	auto fib = generator [](async::yield<unsigned int> yield) {
+	auto fib = async::make_generator([](async::yield<unsigned int> yield) {
 		unsigned int a, b;
 		yield((a = 0));
 		yield((b = 1));
@@ -11,7 +11,7 @@ void amain() {
 			std::tie(a, b) = std::make_tuple(b, a + b);
 			yield(b);
 		}
-	};
+	});
 
 	for (size_t i = 0; i < 13; i++) {
 		printf("%d\n", fib());
