@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <team/async.h>
 
+using namespace async;
+
 void amain() {
 
-	auto fib = async::make_generator([](async::yield<unsigned int> yield) {
+	auto fib = make_generator([](yield<unsigned int> yield) {
 		unsigned int a, b;
 		yield((a = 0));
 		yield((b = 1));

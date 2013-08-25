@@ -122,29 +122,38 @@ namespace async {
 		template <typename T> using cb_type = typename arg_type<typename arg_type<T>::type>::type;
 	}
 
-	template<typename F>
-	class lambda_generator : public generator<util::cb_type<F>> {
-		F f;
+	template<typename T>
+	class lambda_generator : public generator<T> {
 		public:
-		lambda_generator(F&& _f) : f(std::forward<F>(_f)) {}
-		protected:
 
 		class yield_t {
 			lambda_generator &g;
 			public:
+			typedef T argument_type;
 			template<typename V>
 			void operator()(V&& v) { g.yield(std::forward<V>(v)); }
 			yield_t(lambda_generator &_g) : g(_g) {}
 		};
 
+		private:
+		std::function<void(yield_t)> f;
+
+		public:
+		explicit lambda_generator(decltype(f)&& _f) : f(std::forward<decltype(f)>(_f)) {}
 		virtual void gen_impl() override { f(yield_t(*this)); }
 	};
 
 	template <typename T> using yield = typename lambda_generator<T>::yield_t;
 
 	template<typename F>
-	lambda_generator<F> make_generator(F&& f) {
-		return lambda_generator<F>(std::forward<F>(f));
+	lambda_generator<
+		typename util::arg_type<F>::type::argument_type
+	> make_generator(F&& f) {
+		return lambda_generator<
+			// This is ugly. I want to specialize util::cb_type to use
+			// argument_type if it exists but had trouble doing that.
+			typename util::arg_type<F>::type::argument_type
+		>(std::forward<F>(f));
 	}
 
 	void sleep(int seconds) { timer(&loop).start(seconds * 1000); }
