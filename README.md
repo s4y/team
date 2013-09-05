@@ -42,12 +42,13 @@ I want it to work like Tame but without code transformation (except for the C++ 
 
 ## More examples
 
-[Clojure/Go-style channels](http://blog.drewolson.org/blog/2013/07/04/clojure-core-dot-async-and-go-a-code-comparison/) (WIP):
+[Clojure/Go-style channels](http://blog.drewolson.org/blog/2013/07/04/clojure-core-dot-async-and-go-a-code-comparison/):
 
 ```c++
-await {
-    channel<int> ch;
+channel<int> ch;
 
+await {
+    
     A {
         while (int i = ch.recv()) {
             printf("Pong %d\n", i);
