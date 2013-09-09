@@ -80,7 +80,7 @@ namespace async {
 
 	template <typename T>
 	class generator {
-		channel<T> channel;
+		channel<std::unique_ptr<T>> channel;
 
 		coroutine_t *gen;
 		bool running;
@@ -89,23 +89,60 @@ namespace async {
 		protected:
 
 		template<typename V>
-		void yield(V&& v){ channel.send(std::forward<V>(v)); }
+		void yield(V&& v){
+			channel.send(std::unique_ptr<T>(new T(std::forward<V>(v))));
+		}
+		void yield(std::unique_ptr<T> &&p){ channel.send(std::move(p)); }
 
-		virtual void gen_impl() = 0;
+		virtual void generate() = 0;
+
+		bool over;
+
+		private:
+		void start() { generate(); over = true; channel.send(nullptr); }
 
 		public:
 
-		generator() : channel(1), running(false), gen(
-			new coroutine_t(&loop, std::bind(&generator::gen_impl, this), nullptr)
+		typedef T value_type;
+
+		generator() : channel(1), running(false), over(false), gen(
+			new coroutine_t(&loop, std::bind(&generator::start, this), nullptr)
 		) { }
 
-		T operator()() {
+		auto operator()() -> decltype(channel.recv()) {
 			if (!running) {
 				running = true;
 				loop.blockOnce(gen);
 			}
 			return channel.recv();
 		}
+
+		class iterator {
+			generator *g;
+			std::unique_ptr<value_type> last;
+
+			public:
+			iterator(generator &_g) : g(&_g), last((*g)()) {}
+			iterator() : g(nullptr) {}
+
+			value_type *operator++() {
+				last = (*g)();
+				return last.get();
+			}
+			value_type &operator*() { return *last.get(); }
+
+			bool operator!=(iterator &other) {
+				return !(
+					g == other.g ||
+					(!g && other.g->over && !other.last) ||
+					(!other.g && g->over && !last)
+				);
+			}
+		};
+
+		iterator begin() { return iterator(*this); }
+		iterator end() { return iterator(); }
+
 	};
 
 	namespace util {
@@ -140,7 +177,7 @@ namespace async {
 
 		public:
 		explicit lambda_generator(decltype(f)&& _f) : f(std::forward<decltype(f)>(_f)) {}
-		virtual void gen_impl() override { f(yield_t(*this)); }
+		virtual void generate() override { f(yield_t(*this)); }
 	};
 
 	template <typename T> using yield = typename lambda_generator<T>::yield_t;
