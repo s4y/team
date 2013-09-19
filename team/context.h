@@ -1,6 +1,9 @@
 #pragma once
 
-#define _XOPEN_SOURCE
+#ifndef _XOPEN_SOURCE
+#error You must build with -D_XOPEN_SOURCE=1. Yes, this sucks. See https://github.com/Sidnicious/team/wiki/_XOPEN_SOURCE for details.
+#endif
+
 #include <ucontext.h>
 
 #include <queue>

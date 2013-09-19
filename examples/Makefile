@@ -4,6 +4,7 @@ examples: $(EXAMPLES)
 
 bin/%: %.cpp ../team
 	c++ --std=c++11 -stdlib=libc++\
+		-D_XOPEN_SOURCE=1\
 		-I..\
 		-I../deps/uv/include\
 		-framework CoreFoundation\
