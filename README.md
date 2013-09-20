@@ -11,13 +11,13 @@ using async::sleep
 void amain() {
 
 	await {
-		A []{ sleep(2); printf("Slow thing done\n"); };
+		A [] { sleep(2); printf("Slow thing done\n"); };
 		printf("Started a slow thing\n");
-		A []{ sleep(1); printf("Quick thing done\n"); };
+		A [] { sleep(1); printf("Quick thing done\n"); };
 		printf("Started a quick thing\n");
 	}
 
-	printf("Everything done!\n");
+	printf("Everything's done!\n");
 
 }
 ```
@@ -40,31 +40,15 @@ Status: Relatively immature.
 
 I want it to work like Tame but without code transformation (except for the C++ preprocessor), and thus able to be used with libraries written in a blocking style.
 
-## More examples
+## Examples
 
-[Clojure/Go-style channels](http://blog.drewolson.org/blog/2013/07/04/clojure-core-dot-async-and-go-a-code-comparison/):
+You should check out these examples first:
 
-```c++
-channel<int> ch;
-
-await {
-    
-    A []{
-        while (int i = ch.recv()) {
-            printf("Pong %d\n", i);
-            asleep(1);
-        }
-    };
-
-    A []{
-        for (int i = 5; i--;) {
-            printf("Ping %d\n", i);
-            ch.send(i);
-        }
-    };
-}
-```
-
+1. [`hello_world`](https://github.com/Sidnicious/team/blob/master/examples/echo_server.cpp) — How to run stuff asynchronously.
+2. [`timers`](https://github.com/Sidnicious/team/blob/master/examples/timers.cpp) — Pretty similar. Includes a fire-and-forget example.
+3. [`channels`](https://github.com/Sidnicious/team/blob/master/examples/channels.cpp) — Hacked-together [Clojure/Go-style channels](http://blog.drewolson.org/blog/2013/07/04/clojure-core-dot-async-and-go-a-code-comparison/). Just proof that you can build other async constructs on top of team core. You can skip this.
+4. [`generators`](https://github.com/Sidnicious/team/blob/master/examples/generators.cpp) — Python-style generators with `yield`. Also hacked together, you can skip this.
+5. [`echo_server`](https://github.com/Sidnicious/team/blob/master/examples/echo_server.cpp) — Start it up and use one or more copies of `nc` to throw packets its way.
 
 ## Inspiration
 
