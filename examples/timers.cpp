@@ -12,12 +12,12 @@ void still_alive() {
 
 void amain() {
 
-	A { still_alive(); };
+	A [&]{ still_alive(); };
 
 	await {
-		A { sleep(3); printf("Slow thing done\n"); };
+		A [&]{ sleep(3); printf("Slow thing done\n"); };
 		printf("Started a slow thing\n");
-		A { sleep(1); printf("Quick thing done\n"); };
+		A [&]{ sleep(1); printf("Quick thing done\n"); };
 		printf("Started a quick thing\n");
 	}
 

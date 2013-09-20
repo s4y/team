@@ -15,8 +15,8 @@ void amain() {
 
 	await {
 
-		A { worker(ch, "Steve"); };
-		A { worker(ch, "Fred"); };
+		A [&]{ worker(ch, "Steve"); };
+		A [&]{ worker(ch, "Fred"); };
 
 		A {
 			for (int i = 10; i--;) {

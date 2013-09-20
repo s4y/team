@@ -11,9 +11,9 @@ using async::sleep
 void amain() {
 
 	await {
-		A { sleep(2); printf("Slow thing done\n"); };
+		A []{ sleep(2); printf("Slow thing done\n"); };
 		printf("Started a slow thing\n");
-		A { sleep(1); printf("Quick thing done\n"); };
+		A []{ sleep(1); printf("Quick thing done\n"); };
 		printf("Started a quick thing\n");
 	}
 
@@ -32,11 +32,11 @@ Slow thing done
 Everything done!
 ```
 
-Calls block, but `A{ }` runs its contents asynchronously, returning control to the caller if it blocks, or when it finishes.
+Calls block, but `A` runs whatever you pass it (usually a lambda) asynchronously, returning control to the caller if it blocks, or when it finishes.
 
 `await` blocks until every asynchronous task spawned inside it finishes.
 
-Status: Pretty immature, a couple of weeks in.
+Status: Relatively immature.
 
 I want it to work like Tame but without code transformation (except for the C++ preprocessor), and thus able to be used with libraries written in a blocking style.
 
@@ -49,14 +49,14 @@ channel<int> ch;
 
 await {
     
-    A {
+    A []{
         while (int i = ch.recv()) {
             printf("Pong %d\n", i);
             asleep(1);
         }
     };
 
-    A {
+    A []{
         for (int i = 5; i--;) {
             printf("Ping %d\n", i);
             ch.send(i);
