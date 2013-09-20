@@ -18,10 +18,10 @@ void amain() {
 		A [&]{ worker(ch, "Steve"); };
 		A [&]{ worker(ch, "Fred"); };
 
-        for (int i = 10; i--;) {
-            printf("Sending %d\n", i);
-            ch.send(i);
-        }
+		for (int i = 10; i--;) {
+			printf("Sending %d\n", i);
+			ch.send(i);
+		}
 
 	}
 
