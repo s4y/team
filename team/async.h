@@ -44,6 +44,35 @@ namespace async {
 		}
 	};
 
+	template <typename ...S>
+	class event {
+		std::tuple<S&...> slots;
+		context_t ctx;
+		bool triggered, waiting;
+
+		public:
+		event(S &...s) : slots(s...), triggered(false), waiting(false) {}
+
+		template <typename ...T>
+		void trigger(T &&...t) {
+			slots = std::forward_as_tuple(t...);
+			triggered = true;
+			if (waiting) loop.blockOnce(&ctx);
+		}
+
+		void wait() {
+			if (triggered) return;
+			waiting = true;
+			ctx.yield(&loop);
+			waiting = false;
+		}
+	};
+
+	template <typename ...T>
+	auto mkevent(T &...t) -> std::shared_ptr<event<T...>> {
+		return std::make_shared<event<T...>>(t...);
+	}
+
 	template <typename T>
 	class channel {
 
