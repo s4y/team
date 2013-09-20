@@ -17,11 +17,7 @@ void amain() {
 			if (buf->len == 5 && !memcmp("quit\n", buf->base, 5)) { break; }
 			client->write({std::move(buf)});
 		}
-		if (client->err) {
-			fprintf(stderr, "%p read error: %d\n", client.get(), client->err);
-		} else {
-			fprintf(stderr, "%p disconnected\n", client.get());
-		}
+		fprintf(stderr, "%p disconnected\n", client.get());
 	});
 
 }
