@@ -44,7 +44,7 @@ I want it to work like Tame but without code transformation (except for the C++ 
 
 You should check out these examples first:
 
-1. [`hello_world`](https://github.com/Sidnicious/team/blob/master/examples/echo_server.cpp) — How to run stuff asynchronously.
+1. [`hello_world`](https://github.com/Sidnicious/team/blob/master/examples/hello_world.cpp) — How to run stuff asynchronously.
 2. [`timers`](https://github.com/Sidnicious/team/blob/master/examples/timers.cpp) — Pretty similar. Includes a fire-and-forget example.
 3. [`channels`](https://github.com/Sidnicious/team/blob/master/examples/channels.cpp) — Hacked-together [Clojure/Go-style channels](http://blog.drewolson.org/blog/2013/07/04/clojure-core-dot-async-and-go-a-code-comparison/). Just proof that you can build other async constructs on top of team core. You can skip this.
 4. [`generators`](https://github.com/Sidnicious/team/blob/master/examples/generators.cpp) — Python-style generators with `yield`. Also hacked together, you can skip this.
