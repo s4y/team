@@ -79,7 +79,7 @@ namespace async {
 
 		void read(std::function<void(decltype(ch.recv()))> cb) {
 			while (auto data = read()) {
-				A [&]{ cb(std::move(data)); };
+				A { cb(std::move(data)); };
 			}
 		}
 
@@ -120,7 +120,7 @@ namespace async {
 
 		void accept(std::function<void(client_type)> cb) {
 			while (auto client = accept()) {
-				A [&]{ cb(std::move(client)); };
+				A { cb(std::move(client)); };
 			}
 		}
 	};

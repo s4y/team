@@ -22,8 +22,8 @@ void amain() {
 		// Since Team just uses cooperative multitasking more workers won't be
 		// faster. This just demonstrates having more than one listener on a
 		// channel at a time.
-		A [&]{ worker(ch, "Steve"); };
-		A [&]{ worker(ch, "Fred"); };
+		A { worker(ch, "Steve"); };
+		A { worker(ch, "Fred"); };
 
 		for (int i = 10; i--;) {
 			printf("Sending %d\n", i);

@@ -14,12 +14,12 @@ void amain() {
 
 	// This is fire-and-forget since we're not in an await {}.
 	// In this case, it'll keep running forever.
-	A [&]{ still_alive(); };
+	A { still_alive(); };
 
 	await {
-		A [&]{ sleep(3); printf("Slow thing done\n"); };
+		A { sleep(3); printf("Slow thing done\n"); };
 		printf("Started a slow thing\n");
-		A [&]{ sleep(1); printf("Quick thing done\n"); };
+		A { sleep(1); printf("Quick thing done\n"); };
 		printf("Started a quick thing\n");
 	}
 

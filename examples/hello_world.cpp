@@ -16,7 +16,8 @@ void amain() {
 	// Let's pretend to fetch ten users/emails/kittens, at the same time.
 	await {
 		for (size_t i = 0; i < results.size(); i++) {
-			A [&,i] { results[i] = work(i); };
+			// AC runs any callable asynchronously (in this case a lambda with custom capture)
+			AC [&,i] { results[i] = work(i); };
 		}
 	}
 

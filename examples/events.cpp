@@ -9,7 +9,7 @@ void amain() {
 	int i;
 	auto ev = mkevent(i);
 
-	A [&]{
+	A {
 		sleep(1);
 		ev->trigger(1);
 		cout << "Fired!" << endl;

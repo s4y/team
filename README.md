@@ -11,9 +11,9 @@ using async::sleep
 void amain() {
 
 	await {
-		A [] { sleep(2); printf("Slow thing done\n"); };
+		A { sleep(2); printf("Slow thing done\n"); };
 		printf("Started a slow thing\n");
-		A [] { sleep(1); printf("Quick thing done\n"); };
+		A { sleep(1); printf("Quick thing done\n"); };
 		printf("Started a quick thing\n");
 	}
 
@@ -32,7 +32,7 @@ Slow thing done
 Everything done!
 ```
 
-Calls block, but `A` runs whatever you pass it (usually a lambda) asynchronously, returning control to the caller if it blocks, or when it finishes.
+Calls block, but `A { }` runs its body asynchronously, returning control to the caller if it blocks, or when it finishes.
 
 `await` blocks until every asynchronous task spawned inside it finishes.
 
