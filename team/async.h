@@ -97,21 +97,27 @@ namespace async {
 		}
 
 		T recv() {
-			while (!values.size()) {
-				receivers.push();
+			while (!senders && !values.size()) {
+				if (closed) return T();
+				receivers.wait();
 			}
+			senders.maybe_pop();
 			auto ret = std::move(values.front());
 			values.pop();
-			senders.maybe_pop();
 			return ret;
+		}
+
+		void close() {
+			closed = true;
+			while (receivers) receivers.maybe_pop();
 		}
 	};
 
 	template <typename T>
 	class generator {
-		channel<std::unique_ptr<T>> channel;
-
 		coroutine_t *gen;
+
+		channel<std::unique_ptr<T>> channel;
 		bool running;
 		context_t ctx;
 

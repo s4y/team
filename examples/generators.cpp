@@ -23,14 +23,14 @@ class take_t : public generator<typename G::value_type> {
 	int max;
 
 	void generate() {
-		for (auto i : range(max)) {
+		for (auto i : range(max)) { (void)i;
 			auto v = g();
 			if (!v) break;
 			this->yield(std::move(v));
 		}
 	}
 	public:
-	explicit take_t(int _max, G &_g) : max(_max), g(_g) {}
+	explicit take_t(int _max, G &_g) : g(_g), max(_max) {}
 };
 
 template <typename G>

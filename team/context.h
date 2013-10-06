@@ -45,8 +45,8 @@ public:
 
 class rendezvous_t : private context_t {
 
-	unsigned int m_count;
 	context_t *m_loop;
+	unsigned int m_count;
 	bool m_waiting;
 public:
 	rendezvous_t(context_t *loop) :
