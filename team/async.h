@@ -33,7 +33,7 @@ namespace async {
 		std::queue<std::unique_ptr<fence>> q;
 
 		public:
-		void push() { q.emplace(new fence); q.back()->wait(); }
+		void wait() { q.emplace(new fence); q.back()->wait(); }
 		void maybe_pop() {
 			if (q.empty()) return;
 			// The fence will be destroyed when *after* it's been removed from
@@ -42,6 +42,8 @@ namespace async {
 			auto fence = std::move(q.front());
 			q.pop();
 		}
+
+		operator bool() { return !q.empty(); }
 	};
 
 	template <typename ...S>
@@ -78,18 +80,20 @@ namespace async {
 
 		std::queue<T> values;
 		size_t max_size;
+		bool closed;
 
 		fence_queue senders;
 		fence_queue receivers;
 
 		public:
-		channel() : max_size(0) {}
-		explicit channel(size_t _max_size) : max_size(_max_size) {}
+		explicit channel(size_t _max_size) : max_size(_max_size), closed(false) {}
+		channel() : channel(0) {}
 
 		template <typename Val>
 		void send(Val &&v) {
-			while (max_size && values.size() == max_size) {
-				senders.push();
+			if (closed) abort(); // TODO: throw
+			while (!receivers && values.size() == max_size) {
+				senders.wait();
 			}
 
 			values.push(std::forward<Val>(v));
@@ -140,9 +144,9 @@ namespace async {
 
 		typedef T value_type;
 
-		generator() : channel(1), running(false), over(false), gen(
+		generator() : gen(
 			new coroutine_t(&loop, std::bind(&generator::start, this), nullptr)
-		) { }
+		), channel(1), running(false), over(false) { }
 
 		auto operator()() -> decltype(channel.recv()) {
 			if (!running) {

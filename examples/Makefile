@@ -17,6 +17,10 @@ CXXFLAGS += -g
 
 examples: $(EXAMPLES)
 
+bin/http: http.cpp ../team
+	$(CXX) $(CXXFLAGS)\
+		-I../deps/http-parser\
+		../deps/http-parser/http_parser_g.o\
 		-o $@ $<
 
 bin/%: %.cpp ../team

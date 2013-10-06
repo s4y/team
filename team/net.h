@@ -4,13 +4,21 @@
 
 namespace async {
 
+	// Base buffer. Does not copy or free its contents. Good for const char *s.
 	struct buffer : public uv_buf_t {
+		buffer(uv_buf_t &&_buf) : uv_buf_t(std::move(_buf)) {}
+		buffer(char *d) : uv_buf_t(uv_buf_init(d, strlen(d))) {}
+		buffer(char *d, size_t len) : uv_buf_t(uv_buf_init(d, len)) {}
+		virtual ~buffer() {}
+	};
+
+	struct tmp_buffer : public buffer {
 
 		// Should buffers be able to represent capacity and bytes used?
 
-		explicit buffer(size_t suggested_size) : uv_buf_t(uv_buf_init((char*)malloc(suggested_size), suggested_size)) {}
-		buffer(uv_buf_t &_buf) : uv_buf_t(_buf) {}
-		~buffer() { free(base); }
+		explicit tmp_buffer(size_t suggested_size) : buffer((char*)malloc(suggested_size), suggested_size) {}
+		tmp_buffer(uv_buf_t &&_buf) : buffer(std::move(_buf)) {}
+		virtual ~tmp_buffer() { free(base); }
 
 		static uv_buf_t alloc (uv_handle_t *handle, size_t suggested_size) {
 			return uv_buf_init((char*)malloc(suggested_size), suggested_size);
@@ -45,7 +53,7 @@ namespace async {
 			if (nread > 0) {
 				err = UV_OK;
 				buf.len = nread;
-				ch.send(std::unique_ptr<buffer>(new buffer(buf)));
+				A { ch.send(std::unique_ptr<buffer>(new tmp_buffer(std::move(buf)))); };
 				if (!want_read) {
 					reading = false;
 					uv_read_stop(stream);
@@ -53,7 +61,7 @@ namespace async {
 			} else {
 				auto last_error = uv_last_error(loop.uv).code;
 				err = last_error == UV_EOF ? UV_OK : err;
-				ch.send(nullptr);
+				A { ch.send(nullptr); };
 			}
 		}
 
@@ -68,7 +76,7 @@ namespace async {
 		auto read() -> decltype(ch.recv()) {
 			if (!reading) {
 				reading = true;
-				uv_read_start((uv_stream_t*)m_handle, buffer::alloc, [](uv_stream_t* h, ssize_t n, uv_buf_t b){
+				uv_read_start((uv_stream_t*)m_handle, tmp_buffer::alloc, [](uv_stream_t* h, ssize_t n, uv_buf_t b){
 					// Derp. Want a templated function to forward this junk
 					reinterpret_cast<socket_tcp*>(h->data)->read_cb(h, n, b);
 				});
@@ -93,6 +101,11 @@ namespace async {
 			});
 			req->fence.wait();
 		}
+
+		template <typename ...Args>
+		void write(Args &&...args) {
+			write({std::make_shared<buffer>(const_cast<char *>(args))...});
+		}
 	};
 
 	class listening_socket_tcp : public handle<uv_tcp_t, uv_tcp_init, uv_stream_t> {
@@ -103,7 +116,10 @@ namespace async {
 		channel<client_type> ch;
 
 		virtual void cb(uv_stream_t *handle, int status) override {
-			ch.send(std::unique_ptr<socket_tcp>(new socket_tcp(handle)));
+			// TODO: like read, stop listen if not accepted again
+			A {
+				ch.send(std::unique_ptr<socket_tcp>(new socket_tcp(handle)));
+			};
 		}
 
 		public:

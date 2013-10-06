@@ -1,3 +1,6 @@
 [submodule "deps/uv"]
 	path = deps/uv
 	url = git://github.com/joyent/libuv.git
+[submodule "deps/http-parser"]
+	path = deps/http-parser
+	url = git://github.com/joyent/http-parser.git

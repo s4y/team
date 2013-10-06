@@ -23,6 +23,7 @@ public:
 	template<typename... Args> void prepare(void(cb)(), Args... args) {
 		makecontext(&m_ctx, cb, sizeof...(args), args...);
 	}
+	virtual ~context_t() {}
 
 };
 #pragma clang diagnostic pop;
