@@ -15,6 +15,10 @@
 class context_t {
 protected:
 	ucontext_t m_ctx;
+
+	// Use m_ctx directly instead of going through the virtual operator. Pretty
+	// much just intended for use to spin up the event loop.
+	void yield_real(context_t *ctx) { swapcontext(&m_ctx, *ctx); }
 public:
 	virtual operator ucontext_t *() { return &m_ctx; }
 	void yield(context_t *ctx) { swapcontext(*this, *ctx); }
@@ -41,7 +45,7 @@ class coroutine_t : public context_t {
 	void run();
 
 public:
-	coroutine_t(context_t *ctx, std::function<void()> &&_f, rendezvous_t *r);
+	coroutine_t(context_t *ctx, std::function<void()> &&_f, rendezvous_t *r = nullptr);
 };
 
 class rendezvous_t : private context_t {

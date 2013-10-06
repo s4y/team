@@ -6,7 +6,7 @@
 const char *ip = "127.0.0.1";
 const int port = 8080;
 
-void amain() {
+int main() {
 	async::listening_socket_tcp sock(ip, port);
 	std::cout << "Listening on " << ip << ":" << port << std::endl;
 

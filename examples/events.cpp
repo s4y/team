@@ -4,7 +4,7 @@
 using namespace std;
 using namespace async;
 
-void amain() {
+int main() {
 
 	int i;
 	auto ev = mkevent(i);

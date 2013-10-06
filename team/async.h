@@ -246,11 +246,3 @@ rendezvous_t * const __r = nullptr;
 
 // #define await rendezvous_t _r(&async::loop); auto *__r = &_r;
 #define await for (async::await_t __r; !__r.done; __r.done = true)
-
-void amain();
-
-int main() {
-	A { amain(); };
-	async::loop.run();
-}
-

@@ -36,7 +36,7 @@ class take_t : public generator<typename G::value_type> {
 template <typename G>
 take_t<G> take(int max, G &g) { return take_t<G>(max, g); }
 
-void amain() {
+int main() {
 
 	cout << "Check out this sweet range:" << endl;
 	for (auto i : range(10)) {

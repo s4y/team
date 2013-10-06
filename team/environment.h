@@ -10,7 +10,8 @@ class env_t : public context_t {
 protected:
 
 	operator ucontext_t *() override {
-		return m_returns.empty() ? &m_ctx : static_cast<ucontext_t *>(m_returns.top());
+		if (!m_returns.empty()) return m_returns.top();
+		return &m_ctx;
 	}
 
 public:
@@ -21,7 +22,7 @@ public:
 		m_returns.pop();
 	}
 
-	void spawn(std::function<void()> &&f, rendezvous_t *r) {
+	void spawn(std::function<void()> &&f, rendezvous_t *r = nullptr) {
 		blockOnce(new coroutine_t(
 			this, std::forward<std::function<void()>>(f), r
 		));

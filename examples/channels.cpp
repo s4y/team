@@ -9,7 +9,7 @@ void worker(async::channel<int> &ch, const char *name) {
 	}
 }
 
-void amain() {
+int main() {
 
 	// Team's channels work a bit like channels in Go and Clojure: you can
 	// send() values to them or recv() from them. recv() blocks if the

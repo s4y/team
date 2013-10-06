@@ -10,7 +10,7 @@ void still_alive() {
 	}
 }
 
-void amain() {
+int main() {
 
 	// This is fire-and-forget since we're not in an await {}.
 	// In this case, it'll keep running forever.

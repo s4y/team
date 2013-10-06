@@ -9,7 +9,7 @@ int work(int in) {
 	return in;
 }
 
-void amain() {
+int main() {
 
 	vector<int> results(10);
 

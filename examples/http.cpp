@@ -8,7 +8,7 @@ using namespace async;
 const char *ip = "127.0.0.1";
 const int port = 8080;
 
-void amain() {
+int main() {
 
 	cout << "Listening on http://" << ip << ":" << port << endl;
 
