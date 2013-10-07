@@ -2,7 +2,7 @@ EXAMPLES = $(patsubst %.cpp,bin/%,$(wildcard *.cpp))
 
 CXX=clang++
 CXXFLAGS +=\
-	 --std=c++11 -stdlib=libc++\
+	 -std=c++11 -stdlib=libc++\
 	 -Wall\
 	 -Wpedantic\
 	 -Werror\
