@@ -1,11 +1,11 @@
-#include <stdio.h>
 #include <team/async.h>
+#include "util.h"
 
 using async::sleep;
 
 void still_alive() {
 	for (;;) {
-		printf("  Still alive\n");
+		log("  Still alive");
 		sleep(1);
 	}
 }
@@ -17,12 +17,12 @@ int main() {
 	A { still_alive(); };
 
 	await {
-		A { sleep(3); printf("Slow thing done\n"); };
-		printf("Started a slow thing\n");
-		A { sleep(1); printf("Quick thing done\n"); };
-		printf("Started a quick thing\n");
+		A { sleep(3); log("Slow thing done"); };
+		log("Started a slow thing");
+		A { sleep(1); log("Quick thing done"); };
+		log("Started a quick thing");
 	}
 
-	printf("Everything done!\n");
+	log("Everything done!");
 
 }

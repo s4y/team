@@ -1,6 +1,5 @@
-#include <stdio.h>
 #include <team/async.h>
-#include <iostream>
+#include "util.h"
 
 using namespace std;
 using namespace async;
@@ -38,12 +37,12 @@ take_t<G> take(int max, G &g) { return take_t<G>(max, g); }
 
 int main() {
 
-	cout << "Check out this sweet range:" << endl;
+	log("Check out this sweet range:");
 	for (auto i : range(10)) {
-		cout << i << endl;
+		log(i);
 	}
 
-	cout << endl << "Here are some Fibonacci numbers:" << endl;
+	log("\nHere are some Fibonacci numbers:");
 
 	auto fib = make_generator([](yield<uint64_t> yield) {
 		uint64_t a, b;
@@ -56,6 +55,6 @@ int main() {
 	});
 
 	for (auto i : take(10, fib)) {
-		cout << i << endl;
+		log(i);
 	}
 }

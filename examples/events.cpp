@@ -1,7 +1,6 @@
 #include <team/async.h>
-#include <iostream>
+#include "util.h"
 
-using namespace std;
 using namespace async;
 
 int main() {
@@ -12,11 +11,11 @@ int main() {
 	A {
 		sleep(1);
 		ev->trigger(1);
-		cout << "Fired!" << endl;
+		log("Fired!");
 	};
 
-	cout << "Waiting..." << endl;
+	log("Waiting...");
 	ev->wait();
-	cout << "Got " << i << endl;
+	log("Got ", i);
 
 }

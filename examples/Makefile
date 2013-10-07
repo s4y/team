@@ -17,5 +17,5 @@ CXXFLAGS += -g
 
 examples: $(EXAMPLES)
 
-bin/%: %.cpp ../include/team
+bin/%: %.cpp ../include/team util.h
 	$(CXX) $(CXXFLAGS) -o $@ $<

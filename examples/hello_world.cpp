@@ -1,5 +1,5 @@
 #include <team/async.h>
-#include <iostream>
+#include "util.h"
 
 using namespace std;
 using namespace async;
@@ -22,6 +22,6 @@ int main() {
 	}
 
 	for (const int &res : results) {
-		cout << res << endl;
+		log(res);
 	}
 }

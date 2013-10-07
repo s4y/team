@@ -1,10 +1,10 @@
-#include <stdio.h>
 #include <team/async.h>
+#include "util.h"
 
 void worker(async::channel<int> &ch, const char *name) {
 	for (;;) {
 		int i = ch.recv();
-		printf("%s working on %d\n", name, i);
+		log(name, " working on ", i);
 		async::sleep(1);
 	}
 }
@@ -26,7 +26,7 @@ int main() {
 		A { worker(ch, "Fred"); };
 
 		for (int i = 10; i--;) {
-			printf("Sending %d\n", i);
+			log("Sending ", i);
 			ch.send(i);
 		}
 

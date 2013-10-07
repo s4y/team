@@ -1,6 +1,5 @@
 #include <team/http.h>
-#include <iostream>
-
+#include "util.h"
 
 using namespace std;
 using namespace async;
@@ -10,7 +9,7 @@ const int port = 8080;
 
 int main() {
 
-	cout << "Listening on http://" << ip << ":" << port << endl;
+	log("Listening on http://", ip, ":", port);
 
 	HTTP::Server(ip, port).serve([](HTTP::Request &req, socket_tcp &client) {
 		// sleep(1);
