@@ -3,21 +3,25 @@
 Event loop ([libuv](https://github.com/joyent/libuv))-driven coroutines for C++ that are easy to use with minimal syntax. Here's an example:
 
 ```c++
-
 #include <team/async.h>
+#include <iostream>
 
-using async::sleep
+using namespace std;
+using async::sleep;
 
-void amain() {
+template <typename T>
+void log (T s) { cout << s << endl; }
 
-	await {
-		A { sleep(2); printf("Slow thing done\n"); };
-		printf("Started a slow thing\n");
-		A { sleep(1); printf("Quick thing done\n"); };
-		printf("Started a quick thing\n");
-	}
+int main() {
 
-	printf("Everything's done!\n");
+    await {
+        A { sleep(2); log("Slow thing done"); };
+        log("Started a slow thing");
+        A { sleep(1); log("Quick thing done"); };
+        log("Started a quick thing");
+    }
+
+    log("Everything's done!");
 
 }
 ```
@@ -29,7 +33,7 @@ Started a slow thing
 Started a quick thing
 Quick thing done
 Slow thing done
-Everything done!
+Everything's done!
 ```
 
 Calls block, but `A { }` runs its body asynchronously, returning control to the caller if it blocks, or when it finishes.
