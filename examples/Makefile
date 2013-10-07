@@ -7,21 +7,15 @@ CXXFLAGS +=\
 	 -Wpedantic\
 	 -Werror\
 	-D_XOPEN_SOURCE=1\
-	-I..\
-	-I../deps/uv/include\
+	-I../include\
 	-framework CoreFoundation\
 	-framework CoreServices\
+	../deps/http-parser/http_parser_g.o\
 	../deps/uv/libuv.a
 
 CXXFLAGS += -g
 
 examples: $(EXAMPLES)
 
-bin/http: http.cpp ../team
-	$(CXX) $(CXXFLAGS)\
-		-I../deps/http-parser\
-		../deps/http-parser/http_parser_g.o\
-		-o $@ $<
-
-bin/%: %.cpp ../team
+bin/%: %.cpp ../include
 	$(CXX) $(CXXFLAGS) -o $@ $<
