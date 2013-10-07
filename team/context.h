@@ -23,7 +23,7 @@ public:
 	virtual operator ucontext_t *() { return &m_ctx; }
 	void yield(context_t *ctx) { swapcontext(*this, *ctx); }
 	void save() { getcontext(&m_ctx); }
-	void load() { setcontext(&m_ctx); }
+	[[noreturn]] void load() { setcontext(&m_ctx); abort(); }
 	template<typename... Args> void prepare(void(cb)(), Args... args) {
 		makecontext(&m_ctx, cb, sizeof...(args), args...);
 	}

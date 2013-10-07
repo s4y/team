@@ -1,6 +1,7 @@
 #pragma once
 
 #include "environment.h"
+#include <stdlib.h>
 
 struct loop_t : public env_t {
 
@@ -14,6 +15,7 @@ struct loop_t : public env_t {
 		spawn([&] {
 			yield_real(this);
 			uv_run(uv, UV_RUN_DEFAULT);
+			exit(0);
 		});
 	}
 
