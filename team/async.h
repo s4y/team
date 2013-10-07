@@ -25,6 +25,8 @@ namespace async {
 	class fence {
 		context_t ctx;
 		public:
+		fence(fence &&) = default;
+		fence() = default;
 		~fence() { loop.blockOnce(&ctx); }
 		void wait() { ctx.yield(&loop); }
 	};
@@ -87,7 +89,8 @@ namespace async {
 
 		public:
 		explicit channel(size_t _max_size) : max_size(_max_size), closed(false) {}
-		channel() : channel(0) {}
+		channel() = default;
+		channel(channel &&) = default;
 
 		template <typename Val>
 		void send(Val &&v) {

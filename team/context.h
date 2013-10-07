@@ -28,6 +28,8 @@ public:
 		makecontext(&m_ctx, cb, sizeof...(args), args...);
 	}
 	virtual ~context_t() {}
+	context_t() = default;
+	context_t(context_t &&) = default;
 
 };
 #pragma clang diagnostic pop;
