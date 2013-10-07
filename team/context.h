@@ -8,6 +8,7 @@
 
 #include <queue>
 #include <functional>
+#include <stdlib.h>
 #include <uv.h>
 
 #pragma clang diagnostic push
