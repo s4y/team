@@ -41,9 +41,6 @@ namespace async {
 		channel<std::unique_ptr<buffer>> ch;
 		bool reading, want_read;
 
-		// See "Derp" below
-		virtual void cb(uv_stream_t *handle, int status) override { }
-
 		void read_cb(uv_stream_t *stream, ssize_t nread, uv_buf_t buf) {
 			if (nread == 0) {
 				if (buf.base) free(buf.base);
@@ -76,10 +73,10 @@ namespace async {
 		auto read() -> decltype(ch.recv()) {
 			if (!reading) {
 				reading = true;
-				uv_read_start((uv_stream_t*)m_handle, tmp_buffer::alloc, [](uv_stream_t* h, ssize_t n, uv_buf_t b){
-					// Derp. Want a templated function to forward this junk
-					reinterpret_cast<socket_tcp*>(h->data)->read_cb(h, n, b);
-				});
+				uv_read_start(
+					(uv_stream_t*)m_handle, tmp_buffer::alloc,
+					TEAM_UV_CALLBACK(uv_stream_t, socket_tcp::read_cb)
+				);
 			}
 			want_read = true;
 			return ch.recv();
@@ -115,7 +112,7 @@ namespace async {
 		private:
 		channel<client_type> ch;
 
-		virtual void cb(uv_stream_t *handle, int status) override {
+		void cb(uv_stream_t *handle, int status) {
 			// TODO: like read, stop listen if not accepted again
 			A {
 				ch.send(std::unique_ptr<socket_tcp>(new socket_tcp(handle)));
@@ -125,8 +122,10 @@ namespace async {
 		public:
 		listening_socket_tcp(const char *ip, int port, int backlog = 128) : handle(loop.uv) {
 			uv_tcp_bind(m_handle, uv_ip4_addr(ip, port));
-			int err = uv_listen((uv_stream_t*)m_handle, backlog, _cb);
-			if (err) {
+			if (int err = uv_listen(
+				(uv_stream_t*)m_handle, backlog,
+				TEAM_UV_CALLBACK(uv_stream_t, listening_socket_tcp::cb)
+			)) {
 				// TODO: Expose errors. Throw an exception?
 				fprintf(stderr, "Failed to listen on %s:%d (%d) \n", ip, port, err);
 			}
