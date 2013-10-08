@@ -27,12 +27,13 @@ protected:
 
 	T *m_handle;
 
+	void bind(void *p) { m_handle->data = p; }
+
 	handle(uv_loop_t *loop) : m_handle(new T) {
 		if (int ret = Init(loop, m_handle)) {
 			fprintf(stderr, "libuv handle init failed with %d\n", ret);
 			exit(1);
 		}
-		m_handle->data = this;
 	}
 	~handle() {
 		uv_close((uv_handle_t*)m_handle, [](uv_handle_t *h){ delete h; });
@@ -48,7 +49,7 @@ class timer : public context_t, public handle<uv_timer_t, uv_timer_init> {
 	loop_t *m_loop;
 
 public:
-	timer(loop_t *loop) : handle(loop->uv), m_loop(loop) {}
+	timer(loop_t *loop) : handle(loop->uv), m_loop(loop) { bind(this); }
 
 	void start(uint64_t msec) {
 		uv_timer_start(

@@ -64,6 +64,7 @@ namespace async {
 
 		public:
 		socket_tcp(uv_stream_t *server) : handle(loop.uv), reading(false), want_read(false) {
+			bind(this);
 			int err = uv_accept(server, (uv_stream_t*)m_handle);
 			if (err) {
 				fprintf(stderr, "Failed to accept a connection (%d)\n", err);
@@ -121,6 +122,7 @@ namespace async {
 
 		public:
 		listening_socket_tcp(const char *ip, int port, int backlog = 128) : handle(loop.uv) {
+			bind(this);
 			uv_tcp_bind(m_handle, uv_ip4_addr(ip, port));
 			if (int err = uv_listen(
 				(uv_stream_t*)m_handle, backlog,
