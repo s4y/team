@@ -3,7 +3,7 @@
 #include "event_loop.h"
 #include <stdlib.h>
 
-namespace async {
+namespace team {
 
 template<typename T, int(*Init)(uv_loop_t*, T *handle), typename CT = T>
 class handle {

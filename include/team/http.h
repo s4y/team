@@ -11,7 +11,7 @@ class Parser {
 
 	public:
 
-	typedef async::channel<std::tuple<const char *, size_t>> channel_type;
+	typedef team::channel<std::tuple<const char *, size_t>> channel_type;
 
 	channel_type url;
 	channel_type header_field;
@@ -65,7 +65,7 @@ class Parser {
 	bool finish() { return execute(nullptr, 0); }
 	bool wasSuccessful() { return success; }
 
-	bool parseFrom(std::unique_ptr<async::socket_tcp> &sock) {
+	bool parseFrom(std::unique_ptr<team::socket_tcp> &sock) {
 		while (auto buf = sock->read()) {
 			if (!execute(buf->base, buf->len)) return false;
 			if (success) break;
@@ -108,7 +108,7 @@ class Request {
 	std::string url, body;
 	std::vector<std::pair<std::string, std::string>> headers;
 
-	bool parseFrom(std::unique_ptr<async::socket_tcp> &sock) {
+	bool parseFrom(std::unique_ptr<team::socket_tcp> &sock) {
 		using std::string;
 		using std::vector;
 		using std::pair;
@@ -127,10 +127,10 @@ class Request {
 		};
 
 		await {
-			A { collect(p.url, url); };
-			A { collect(p.header_field, field, collect_header); };
-			A { collect(p.header_value, value); };
-			A { collect(p.body, body); };
+			async { collect(p.url, url); };
+			async { collect(p.header_field, field, collect_header); };
+			async { collect(p.header_value, value); };
+			async { collect(p.body, body); };
 
 			ret = p.parseFrom(sock);
 		}
@@ -142,11 +142,11 @@ class Request {
 };
 
 struct Server {
-	async::listening_socket_tcp sock;
+	team::listening_socket_tcp sock;
 
 	Server(const char *ip, int port) : sock(ip, port) {}
 
-	void serve(std::function<void(Request&, async::socket_tcp&)> cb) {
+	void serve(std::function<void(Request&, team::socket_tcp&)> cb) {
 		sock.accept([&](decltype(sock)::client_type client) {
 			Request req;
 			if (req.parseFrom(client)) cb(req, *client);

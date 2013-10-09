@@ -2,14 +2,14 @@
 
 #include "events.h"
 
-namespace async {
+namespace team {
 	loop_t loop(uv_default_loop());
 
 	struct await_t {
 		bool done;
 		rendezvous_t r;
 
-		await_t() : done(false), r(&async::loop) {}
+		await_t() : done(false), r(&team::loop) {}
 		operator rendezvous_t *() { return &r; }
 	};
 
@@ -249,10 +249,10 @@ rendezvous_t * const __r = nullptr;
 
 // Ugly. Open to ideas.
 
-// A (async): Implies a lambda with default capture by reference
-#define A async::spawn_t(__r) << [&]()
-// AC (async call): Implies nothing. Takes any callable.
-#define AC async::spawn_t(__r) <<
+// async: Implies a lambda with default capture by reference
+#define async team::spawn_t(__r) << [&]()
+// acall: Runs any callable (taking no arguments) asynchrounously
+#define acall team::spawn_t(__r) <<
 
-// #define await rendezvous_t _r(&async::loop); auto *__r = &_r;
-#define await for (async::await_t __r; !__r.done; __r.done = true)
+// #define await rendezvous_t _r(&team::loop); auto *__r = &_r;
+#define await for (team::await_t __r; !__r.done; __r.done = true)

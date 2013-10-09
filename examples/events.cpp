@@ -1,14 +1,14 @@
-#include <team/async.h>
+#include <team/team.h>
 #include "util.h"
 
-using namespace async;
+using namespace team;
 
 int main() {
 
 	int i;
 	auto ev = mkevent(i);
 
-	A {
+	async {
 		sleep(1);
 		ev->trigger(1);
 		log("Fired!");

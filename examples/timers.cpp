@@ -1,7 +1,7 @@
-#include <team/async.h>
+#include <team/team.h>
 #include "util.h"
 
-using async::sleep;
+using team::sleep;
 
 void still_alive() {
 	for (;;) {
@@ -14,12 +14,12 @@ int main() {
 
 	// This is fire-and-forget since we're not in an await {}.
 	// In this case, it'll keep running forever.
-	A { still_alive(); };
+	async { still_alive(); };
 
 	await {
-		A { sleep(3); log("Slow thing done"); };
+		async { sleep(3); log("Slow thing done"); };
 		log("Started a slow thing");
-		A { sleep(1); log("Quick thing done"); };
+		async { sleep(1); log("Quick thing done"); };
 		log("Started a quick thing");
 	}
 

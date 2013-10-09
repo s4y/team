@@ -1,8 +1,8 @@
-#include <team/async.h>
+#include <team/team.h>
 #include "util.h"
 
 using namespace std;
-using namespace async;
+using namespace team;
 
 class range : public generator<int> {
 	int max;

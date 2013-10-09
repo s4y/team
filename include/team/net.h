@@ -1,8 +1,8 @@
 #pragma once
 
-#include "async.h"
+#include "team.h"
 
-namespace async {
+namespace team {
 
 	// Base buffer. Does not copy or free its contents. Good for const char *s.
 	struct buffer : public uv_buf_t {
@@ -50,7 +50,7 @@ namespace async {
 			if (nread > 0) {
 				err = UV_OK;
 				buf.len = nread;
-				A { ch.send(std::unique_ptr<buffer>(new tmp_buffer(std::move(buf)))); };
+				async { ch.send(std::unique_ptr<buffer>(new tmp_buffer(std::move(buf)))); };
 				if (!want_read) {
 					reading = false;
 					uv_read_stop(stream);
@@ -58,7 +58,7 @@ namespace async {
 			} else {
 				auto last_error = uv_last_error(loop.uv).code;
 				err = last_error == UV_EOF ? UV_OK : err;
-				A { ch.send(nullptr); };
+				async { ch.send(nullptr); };
 			}
 		}
 
@@ -85,7 +85,7 @@ namespace async {
 
 		void read(std::function<void(decltype(ch.recv()))> cb) {
 			while (auto data = read()) {
-				A { cb(std::move(data)); };
+				async { cb(std::move(data)); };
 			}
 		}
 
@@ -115,7 +115,7 @@ namespace async {
 
 		void cb(uv_stream_t *handle, int status) {
 			// TODO: like read, stop listen if not accepted again
-			A {
+			async {
 				ch.send(std::unique_ptr<socket_tcp>(new socket_tcp(handle)));
 			};
 		}
@@ -137,7 +137,7 @@ namespace async {
 
 		void accept(std::function<void(client_type)> cb) {
 			while (auto client = accept()) {
-				A { cb(std::move(client)); };
+				async { cb(std::move(client)); };
 			}
 		}
 	};

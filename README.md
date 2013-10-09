@@ -15,9 +15,9 @@ void log (T s) { cout << s << endl; }
 int main() {
 
     await {
-        A { sleep(2); log("Slow thing done"); };
+        async { sleep(2); log("Slow thing done"); };
         log("Started a slow thing");
-        A { sleep(1); log("Quick thing done"); };
+        async { sleep(1); log("Quick thing done"); };
         log("Started a quick thing");
     }
 
@@ -36,11 +36,11 @@ Slow thing done
 Everything's done!
 ```
 
-Calls block, but `A { }` runs its body asynchronously, returning control to the caller if it blocks, or when it finishes.
+Calls block. `async { };` runs its body in a coroutine and returns control to the caller if it blocks, or when it finishes.
 
 `await` blocks until every asynchronous task spawned inside it finishes.
 
-Status: Relatively immature.
+Status: Relatively new. Gradually becoming useful though.
 
 I want it to work like Tame but without code transformation (except for the C++ preprocessor), and thus able to be used with libraries written in a blocking style.
 
