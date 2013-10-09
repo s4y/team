@@ -3,11 +3,11 @@
 Event loop ([libuv](https://github.com/joyent/libuv))-driven coroutines for C++ that are easy to use with minimal syntax. Here's an example:
 
 ```c++
-#include <team/async.h>
+#include <team/team.h>
 #include <iostream>
 
 using namespace std;
-using async::sleep;
+using team::sleep;
 
 template <typename T>
 void log (T s) { cout << s << endl; }
