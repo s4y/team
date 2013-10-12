@@ -5,7 +5,6 @@
 namespace HTTP {
 
 class Parser {
-	const static http_parser_settings settings;
 	http_parser p;
 	bool success;
 
@@ -49,6 +48,27 @@ class Parser {
 		return 0;
 	}
 
+	template <int (Parser::*CB)()>
+	static int void_cb(http_parser *p) {
+		return (static_cast<Parser*>(p->data)->*CB)();
+	}
+
+	template <int (Parser::*CB)(const char*, size_t)>
+	static int data_cb(http_parser *p, const char *at, size_t length) {
+		return (static_cast<Parser*>(p->data)->*CB)(at, length);
+	}
+
+	const http_parser_settings settings{
+		void_cb<&Parser::handle_message_begin>,
+		data_cb<&Parser::handle_url>,
+		nullptr,
+		data_cb<&Parser::handle_header_field>,
+		data_cb<&Parser::handle_header_value>,
+		void_cb<&Parser::handle_headers_complete>,
+		data_cb<&Parser::handle_body>,
+		void_cb<&Parser::handle_message_complete>
+	};
+
 	public:
 	Parser(http_parser_type type) : success(false) {
 		http_parser_init(&p, type);
@@ -69,21 +89,6 @@ class Parser {
 		if (!success) finish();
 		return success;
 	}
-};
-
-const http_parser_settings Parser::settings{
-#define HTTP_CB(n)	  [] (http_parser *p) { return reinterpret_cast<Parser*>(p->data)->handle_##n(); }
-#define HTTP_DATA_CB(n) [] (http_parser *p, const char *at, size_t length) { return reinterpret_cast<Parser*>(p->data)->handle_##n(at, length); }
-	HTTP_CB(message_begin),
-	HTTP_DATA_CB(url),
-	nullptr,
-	HTTP_DATA_CB(header_field),
-	HTTP_DATA_CB(header_value),
-	HTTP_CB(headers_complete),
-	HTTP_DATA_CB(body),
-	HTTP_CB(message_complete),
-#undef HTTP_CB
-#undef HTTP_DATA_CB
 };
 
 class Request {

@@ -17,7 +17,7 @@ protected:
 		void (C::*CB)(Handle *, Args...)
 	> struct cb_t<Handle, void (C::*)(Handle *, Args...), CB> {
 		static void f(Handle *handle, Args ...args) {
-			return (reinterpret_cast<C*>(handle->data)->*CB)(handle, args...);
+			return (static_cast<C*>(handle->data)->*CB)(handle, args...);
 		}
 	};
 
