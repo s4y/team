@@ -89,7 +89,7 @@ namespace team {
 
 		public:
 		explicit channel(size_t _max_size) : max_size(_max_size), closed(false) {}
-		channel() = default;
+		channel() : channel(0) {}
 		channel(channel &&) = default;
 
 		template <typename Val>
