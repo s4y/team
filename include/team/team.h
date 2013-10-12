@@ -114,6 +114,14 @@ namespace team {
 			return ret;
 		}
 
+		template <typename Val>
+		channel &operator<<(Val &&v) { send(std::forward<Val>(v)); return *this; }
+
+		template <typename Val>
+		channel &operator>>(Val &v) { v = recv(); return *this; }
+
+		T operator*() { return recv(); }
+
 		void close() {
 			closed = true;
 			while (receivers) receivers.maybe_pop();

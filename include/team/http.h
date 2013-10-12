@@ -20,31 +20,27 @@ class Parser {
 
 	private:
 
-	void send(channel_type &ch, const char *at, size_t length) {
-		ch.send(std::make_tuple(at, length));
-	}
-
 	int handle_message_begin() { return 0; }
 	int handle_url(const char *at, size_t length) {
-		send(url, at, length);
+		url << std::make_tuple(at, length);
 		return 0;
 	}
 	int handle_header_field(const char *at, size_t length) {
-		send(header_field, at, length);
+		header_field << std::make_tuple(at, length);
 		return 0;
 	}
 	int handle_header_value(const char *at, size_t length) {
-		send(header_value, at, length);
+		header_value << std::make_tuple(at, length);
 		return 0;
 	}
 	int handle_headers_complete() {
-		send(url, nullptr, 0);
-		send(header_field, nullptr, 0);
-		send(header_value, nullptr, 0);
+		url.close();
+		header_field.close();
+		header_value.close();
 		return 0;
 	}
 	int handle_body(const char *at, size_t length) {
-		send(body, at, length);
+		body << std::make_tuple(at, length);
 		return 0;
 	}
 	int handle_message_complete() {

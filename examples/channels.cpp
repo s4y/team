@@ -3,7 +3,7 @@
 
 void worker(team::channel<int> &ch, const char *name) {
 	for (;;) {
-		int i = ch.recv();
+		int i = *ch;
 		log(name, " working on ", i);
 		team::sleep(1);
 	}
@@ -27,7 +27,7 @@ int main() {
 
 		for (int i = 10; i--;) {
 			log("Sending ", i);
-			ch.send(i);
+			ch << i;
 		}
 
 	}
