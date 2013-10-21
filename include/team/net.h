@@ -1,6 +1,7 @@
 #pragma once
 
 #include "team.h"
+#include <string>
 
 namespace team {
 
@@ -46,6 +47,46 @@ namespace team {
 		static uv_buf_t alloc (uv_handle_t *handle, size_t suggested_size) {
 			return uv_buf_init((char*)malloc(suggested_size), suggested_size);
 		}
+	};
+
+	struct bufstream {
+		std::vector<std::shared_ptr<buffer>> bufs;
+		size_t size;
+
+		bufstream() : size(0) {}
+
+		bufstream &operator <<(const char *s) {
+			bufs.emplace_back(new buffer((char *)s, strlen(s)));
+			size += bufs.back()->len;
+			return *this;
+		}
+
+		template <size_t S>
+		bufstream &operator <<(const char s[S]) {
+			bufs.emplace_back(new buffer((char *)s, size - 1));
+			size += bufs.back()->len;
+			return *this;
+		}
+
+		bufstream &operator <<(std::pair<const char *, size_t> p) {
+			bufs.emplace_back(new buffer((char *)p.first, p.second));
+			size += bufs.back()->len;
+			return *this;
+		}
+
+		bufstream &operator <<(const std::string &s) {
+			bufs.emplace_back(new buffer((char *)s.c_str(), s.size()));
+			size += bufs.back()->len;
+			return *this;
+		}
+
+		template <typename T, typename ...Args>
+		void add(T &&arg, Args &&...args) {
+			*this << arg;
+			add(args...);
+		}
+
+		void add() {}
 	};
 
 	namespace uv_details {

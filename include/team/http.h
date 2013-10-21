@@ -1,6 +1,10 @@
 #include "net.h"
 #include <http_parser.h>
 #include <string>
+#include <map>
+#include <iostream>
+#include <sstream>
+#include <memory>
 
 namespace HTTP {
 
@@ -94,7 +98,48 @@ class Parser {
 	}
 };
 
-class Request {
+class Headers {
+	public:
+	typedef std::shared_ptr<const std::string> header_type;
+
+	private:
+	std::multimap<std::string, header_type> headers;
+
+	public:
+	Headers() = default;
+
+	Headers(std::initializer_list<decltype(headers)::value_type> _init) : headers(_init) {}
+
+
+	decltype(headers)::const_iterator find(const std::string &key) {
+		return headers.find(key);
+	}
+
+	void add(const std::string &key, const header_type &value) {
+		headers.emplace(key, value);
+	}
+
+	template <typename T>
+	void add(const std::string &key, T &&value) {
+		headers.emplace(key, std::make_shared<const std::string>(std::forward<T>(value)));
+	}
+
+	friend team::bufstream &operator<<(team::bufstream &s, const Headers &h) {
+		for(const auto &field : h.headers) {
+			s << field.first << ": " << *field.second << "\r\n";
+		}
+		return s;
+	}
+
+	friend std::ostream &operator<<(std::ostream &s, const Headers &h) {
+		for(const auto &field : h.headers) {
+			s << field.first << ": " << *field.second << "\r\n";
+		}
+		return s;
+	}
+};
+
+class ClientRequest {
 
 	void collect(Parser::channel_type &ch, std::string &out, std::function<void()> f = nullptr) {
 		using std::get;
@@ -110,7 +155,8 @@ class Request {
 	public:
 
 	std::string url, body;
-	std::vector<std::pair<std::string, std::string>> headers;
+	const char *method;
+	Headers headers;
 
 	bool parseFrom(std::unique_ptr<team::socket_tcp> &sock) {
 		using std::string;
@@ -124,7 +170,7 @@ class Request {
 
 		auto collect_header = [&] {
 			if (!value.empty()) {
-				headers.emplace_back(move(field), move(value));
+				headers.add(move(field), move(value));
 				field.clear();
 				value.clear();
 			}
@@ -139,21 +185,52 @@ class Request {
 			ret = p.parseFrom(sock);
 		}
 		collect_header();
+		method = p.method();
 
 		return ret;
 	}
 
 };
 
+struct Response {
+	std::unique_ptr<team::socket_tcp> sock;
+	unsigned int status;
+	Headers headers;
+
+	Response(std::unique_ptr<team::socket_tcp> &&_sock) :
+		sock(std::move(_sock)), status(200) {}
+
+	void writeHeaders() {
+		team::bufstream bufs;
+		std::string statusLine = (std::stringstream() <<
+			"HTTP/1.1 " << status << " Todo" << "\r\n").str();
+		bufs << statusLine << headers << "\r\n";
+		sock->write(std::move(bufs.bufs));
+	}
+
+	template <typename ...Args>
+	void send(Args &&...args) {
+		team::bufstream body;
+		body.add(std::forward<Args>(args)...);
+		headers.add("Content-Length", std::to_string(body.size));
+		writeHeaders();
+		sock->write(std::move(body.bufs));
+	}
+};
+
+template <typename Req = ClientRequest, typename Res = Response>
 struct Server {
 	team::listening_socket_tcp sock;
 
 	Server(const char *ip, int port) : sock(ip, port) {}
 
-	void serve(std::function<void(Request&, team::socket_tcp&)> cb) {
-		sock.accept([&](decltype(sock)::client_type client) {
-			Request req;
-			if (req.parseFrom(client)) cb(req, *client);
+	void serve(std::function<void(Req &, Res &)> cb) {
+		sock.accept([&](typename decltype(sock)::client_type client) {
+			Req req;
+			if (req.parseFrom(client)) {
+				Res res(std::move(client));
+				cb(req, res);
+			}
 		});
 	}
 	// void stop() { … }
