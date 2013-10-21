@@ -5,9 +5,8 @@
 
 namespace team {
 
-template<typename T, int(*Init)(uv_loop_t*, T *handle), typename CT = T>
-class handle {
-protected:
+template<typename T, typename CT = T>
+struct handle {
 
 	// Thanks to Kerrek SB: http://stackoverflow.com/a/9779391/84745
 	// Improvements that simplify this are welcome.
@@ -27,20 +26,25 @@ protected:
 
 	T *m_handle;
 
-	void bind(void *p) { m_handle->data = p; }
+	void init(void *p) { m_handle->data = p; }
 
-	handle(uv_loop_t *loop) : m_handle(new T) {
+	template <int(*Init)(uv_loop_t*, T *handle)>
+	void init(uv_loop_t *loop, void *p) {
 		if (int ret = Init(loop, m_handle)) {
 			fprintf(stderr, "libuv handle init failed with %d\n", ret);
 			exit(1);
 		}
+		init(p);
 	}
+
+	handle() : m_handle(new T) {}
+
 	~handle() {
 		uv_close((uv_handle_t*)m_handle, [](uv_handle_t *h){ delete h; });
 	}
 };
 
-class timer : public context_t, public handle<uv_timer_t, uv_timer_init> {
+class timer : public context_t, public handle<uv_timer_t> {
 
 	void cb(uv_timer_t *handle, int status) {
 		m_loop->yield(this);
@@ -49,7 +53,7 @@ class timer : public context_t, public handle<uv_timer_t, uv_timer_init> {
 	loop_t *m_loop;
 
 public:
-	timer(loop_t *loop) : handle(loop->uv), m_loop(loop) { bind(this); }
+	timer(loop_t *loop) : m_loop(loop) { init<uv_timer_init>(loop->uv, this); }
 
 	void start(uint64_t msec) {
 		uv_timer_start(

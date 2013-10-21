@@ -80,6 +80,9 @@ class Parser {
 	}
 	bool finish() { return execute(nullptr, 0); }
 	bool wasSuccessful() { return success; }
+	const char *method() {
+		return http_method_str((http_method)p.method);
+	}
 
 	bool parseFrom(std::unique_ptr<team::socket_tcp> &sock) {
 		while (auto buf = sock->read()) {

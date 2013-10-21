@@ -56,7 +56,7 @@ namespace team {
 		};
 	}
 
-	class socket_tcp : public handle<uv_tcp_t, uv_tcp_init, uv_stream_t> {
+	class socket_tcp : public handle<uv_tcp_t, uv_stream_t> {
 		public:
 		uv_err_code err;
 
@@ -86,8 +86,11 @@ namespace team {
 		}
 
 		public:
-		socket_tcp(uv_stream_t *server) : handle(loop.uv), reading(false), want_read(false) {
-			bind(this);
+		socket_tcp() : reading(false), want_read(false) {
+			init<uv_tcp_init>(loop.uv, this);
+		}
+
+		socket_tcp(uv_stream_t *server) : socket_tcp() {
 			int err = uv_accept(server, (uv_stream_t*)m_handle);
 			if (err) {
 				fprintf(stderr, "Failed to accept a connection (%d)\n", err);
@@ -129,7 +132,7 @@ namespace team {
 		}
 	};
 
-	class listening_socket_tcp : public handle<uv_tcp_t, uv_tcp_init, uv_stream_t> {
+	class listening_socket_tcp : public handle<uv_tcp_t, uv_stream_t> {
 		public:
 		typedef std::unique_ptr<socket_tcp> client_type;
 
@@ -144,8 +147,8 @@ namespace team {
 		}
 
 		public:
-		listening_socket_tcp(const char *ip, int port, int backlog = 128) : handle(loop.uv) {
-			bind(this);
+		listening_socket_tcp(const char *ip, int port, int backlog = 128) {
+			init<uv_tcp_init>(loop.uv, this);
 			uv_tcp_bind(m_handle, uv_ip4_addr(ip, port));
 			if (int err = uv_listen(
 				(uv_stream_t*)m_handle, backlog,
