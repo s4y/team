@@ -3,8 +3,6 @@
 #include "events.h"
 
 namespace team {
-	loop_t loop(uv_default_loop());
-
 	struct await_t {
 		bool done;
 		rendezvous_t r;
@@ -250,7 +248,7 @@ namespace team {
 	// task is a leak.
 	[[noreturn]] void peaceOut() { loop.load(); }
 
-	void sleep(int seconds) { timer(&loop).start(seconds * 1000); }
+	void sleep(int seconds) { timer().start(seconds * 1000); }
 }
 
 rendezvous_t * const __r = nullptr;

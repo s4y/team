@@ -44,24 +44,4 @@ struct handle {
 	}
 };
 
-class timer : public context_t, public handle<uv_timer_t> {
-
-	void cb(uv_timer_t *handle, int status) {
-		m_loop->yield(this);
-	}
-
-	loop_t *m_loop;
-
-public:
-	timer(loop_t *loop) : m_loop(loop) { init<uv_timer_init>(loop->uv, this); }
-
-	void start(uint64_t msec) {
-		uv_timer_start(
-			m_handle, TEAM_UV_CALLBACK(uv_timer_t, timer::cb), msec, 0
-		);
-		this->yield(m_loop);
-	}
-};
-
-
 }

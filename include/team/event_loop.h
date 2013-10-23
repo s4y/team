@@ -3,6 +3,8 @@
 #include "environment.h"
 #include <stdlib.h>
 
+namespace team {
+
 struct loop_t : public env_t {
 
 	uv_loop_t *uv;
@@ -23,4 +25,8 @@ struct loop_t : public env_t {
 		if (!running) run();
 		return env_t::operator ucontext_t *();
 	}
+};
+
+loop_t loop(uv_default_loop());
+
 };
