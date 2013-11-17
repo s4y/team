@@ -22,7 +22,7 @@ public:
 		m_returns.pop();
 	}
 
-	void spawn(std::function<void()> &&f, rendezvous_t *r = nullptr) {
+	void spawn(std::function<void()> &&f, coroutine_t::delegate *r = nullptr) {
 		blockOnce(new coroutine_t(
 			this, std::forward<std::function<void()>>(f), r
 		));

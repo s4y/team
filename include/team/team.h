@@ -1,12 +1,14 @@
 #pragma once
 
 #include "event_loop.h"
+#include "rendezvous.h"
 #include "timer.h"
 
-	struct await_t public rendezvous_t {
+namespace team {
+	struct await_t : public rendezvous_t {
 		bool done;
 
-		await_t() : rendezvous_t(&async::loop), done(false) {}
+		await_t() : rendezvous_t(&team::loop), done(false) {}
 	};
 
 	// High-level async constructs
@@ -233,14 +235,14 @@
 	}
 }
 
-basic_rendezvous_t const __r{async::loop};
+basic_rendezvous_t const __r{team::loop};
 
 // Ugly. Open to ideas.
 
 // async: Implies a lambda with default capture by reference
-#define async team::spawn_t(__r) << [&]()
+#define async __r << [&]()
 // acall: Runs any callable (taking no arguments) asynchrounously
-#define acall team::spawn_t(__r) <<
+#define acall __r <<
 
 // #define await rendezvous_t _r(&team::loop); auto *__r = &_r;
 #define await for (team::await_t __r; !__r.done; __r.done = true)

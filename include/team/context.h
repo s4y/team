@@ -10,6 +10,8 @@
 #include <functional>
 #include <stdlib.h>
 #include <uv.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -35,64 +37,75 @@ public:
 };
 #pragma clang diagnostic pop;
 
-class rendezvous_t;
+namespace team {
+	class stack {
+		void *data;
+
+	public:
+		stack() : data(mmap(
+			nullptr,
+			SIGSTKSZ + getpagesize(),
+			PROT_READ | PROT_WRITE,
+#ifdef MAP_ANONYMOUS
+			MAP_ANONYMOUS
+#else
+			MAP_ANON
+#endif
+			| MAP_SHARED
+#ifdef MAP_GROWSDOWN
+			| MAP_GROWSDOWN
+#endif
+			, -1, 0
+		)) {
+			// Guard the bottom of the stack
+			mprotect(data, getpagesize(), PROT_NONE);
+		}
+
+		~stack() {
+			fprintf(stderr, "munmap\n");
+			munmap(data, SIGSTKSZ + getpagesize());
+		}
+
+		void bind(ucontext_t &ctx) {
+			ctx.uc_stack.ss_sp = data;
+			ctx.uc_stack.ss_size = SIGSTKSZ;
+		}
+
+		
+
+	};
+}
 
 class coroutine_t : public context_t {
+public:
+	struct delegate {
+		virtual void started(coroutine_t *) = 0;
+		virtual void stopped(coroutine_t *) = 0;
+		// virtual void threw(coroutine_t *) = 0; // Coming soon
+	};
 	static void cb(coroutine_t *target) { target->run(); }
 
-	char m_stack[SIGSTKSZ];
+	team::stack m_stack;
 	context_t *m_parent;
 	std::function<void()> f;
-	rendezvous_t *m_rendezvous;
+	delegate *d;
 
-	void run();
+	void run() {
+		if (d) d->started(this);
+		f();
+		delete this;
+		// Isn't this bad? We just deleted our stack and ourself.
+		if (d) d->stopped(this);
+		yield(m_parent);
+	}
+
 
 public:
-	coroutine_t(context_t *ctx, std::function<void()> &&_f, rendezvous_t *r = nullptr);
-};
-
-struct basic_rendezvous_t {
-	context_t &loop;
-
-	void operator <<(std::function<void()> &&f)
-	{ loop.spawn(std::forward<std::function<void()>>(f), nullptr); }
-};
-
-class rendezvous_t : private context_t {
-
-	context_t *m_loop;
-	unsigned int m_count;
-	bool m_waiting;
-public:
-	rendezvous_t(context_t *loop) :
-		m_loop(loop), m_count(0), m_waiting(false) {}
-
-	void inc() { m_count++; }
-	void dec() { m_count--; if (m_waiting) load(); }
-
-	void operator <<(std::function<void()> &&f)
-	{ m_loop->spawn(std::forward<std::function<void()>>(f), this); }
-
-	~rendezvous_t() {
-		m_waiting = true;
-		while (m_count) this->yield(m_loop);
+	coroutine_t(context_t *ctx, std::function<void()> &&_f, delegate *_d = nullptr) :
+		m_parent(ctx), f(_f), d(_d)
+	{
+		save();
+		m_stack.bind(m_ctx);
+		prepare((void(*)())cb, this);
 	}
 };
-
-void coroutine_t::run() {
-	if (m_rendezvous) m_rendezvous->inc();
-	f();
-	delete this;
-	// Isn't this bad? We just deleted our stack and ourself.
-	if (m_rendezvous) m_rendezvous->dec();
-	yield(m_parent);
-}
-
-coroutine_t::coroutine_t(context_t *ctx, std::function<void()> &&_f, rendezvous_t *r) :
-	m_parent(ctx), f(_f), m_rendezvous(r)
-{
-	save();
-	m_ctx.uc_stack.ss_sp = m_stack;
-	m_ctx.uc_stack.ss_size = sizeof(m_stack);
-	prepare((void(*)())cb, this);
-}
