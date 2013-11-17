@@ -1,7 +1,7 @@
 #include <team/team.h>
 #include "util.h"
 
-using team::sleep;
+using namespace team;
 
 void still_alive() {
 	for (;;) {

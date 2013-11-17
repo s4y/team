@@ -29,4 +29,11 @@ struct loop_t : public env_t {
 
 loop_t loop(uv_default_loop());
 
-};
+// Yield to the event loop forever, allowing your own context to be lost in
+// the sands of time. You can peaceOut() from main() to keep running until
+// the event loop is clear (all timers fired their last, sockets closed,
+// etc.) at which point you'll exit(0). Calling peaceOut() from an async
+// task is a leak.
+[[noreturn]] void peaceOut() { loop.load(); }
+
+}

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "events.h"
+#include "event_loop.h"
+#include "timer.h"
 
 namespace team {
 	struct await_t {
@@ -240,15 +241,6 @@ namespace team {
 			typename util::arg_type<F>::type::argument_type
 		>(std::forward<F>(f));
 	}
-
-	// Yield to the event loop forever, allowing your own context to be lost in
-	// the sands of time. You can peaceOut() from main() to keep running until
-	// the event loop is clear (all timers fired their last, sockets closed,
-	// etc.) at which point you'll exit(0). Calling peaceOut() from an async
-	// task is a leak.
-	[[noreturn]] void peaceOut() { loop.load(); }
-
-	void sleep(int seconds) { timer().start(seconds * 1000); }
 }
 
 rendezvous_t * const __r = nullptr;
