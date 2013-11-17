@@ -45,12 +45,12 @@ int main() {
 	log("\nHere are some Fibonacci numbers:");
 
 	auto fib = make_generator([](yield<uint64_t> yield) {
-		uint64_t a, b;
-		yield((a = 0));
-		yield((b = 1));
+		uint64_t prev, curr;
+		yield((prev = 0));
+		yield((curr = 1));
 		for(;;) {
-			std::tie(a, b) = std::make_tuple(b, a + b);
-			yield(b);
+			std::tie(prev, curr) = std::make_tuple(curr, prev + curr);
+			yield(curr);
 		}
 	});
 
