@@ -51,6 +51,13 @@ public:
 	coroutine_t(context_t *ctx, std::function<void()> &&_f, rendezvous_t *r = nullptr);
 };
 
+struct basic_rendezvous_t {
+	context_t &loop;
+
+	void operator <<(std::function<void()> &&f)
+	{ loop.spawn(std::forward<std::function<void()>>(f), nullptr); }
+};
+
 class rendezvous_t : private context_t {
 
 	context_t *m_loop;
@@ -62,6 +69,9 @@ public:
 
 	void inc() { m_count++; }
 	void dec() { m_count--; if (m_waiting) load(); }
+
+	void operator <<(std::function<void()> &&f)
+	{ m_loop->spawn(std::forward<std::function<void()>>(f), this); }
 
 	~rendezvous_t() {
 		m_waiting = true;

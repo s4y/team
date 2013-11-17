@@ -3,20 +3,10 @@
 #include "event_loop.h"
 #include "timer.h"
 
-namespace team {
-	struct await_t {
+	struct await_t public rendezvous_t {
 		bool done;
-		rendezvous_t r;
 
-		await_t() : done(false), r(&team::loop) {}
-		operator rendezvous_t *() { return &r; }
-	};
-
-	struct spawn_t {
-		rendezvous_t *r;
-		spawn_t(rendezvous_t *_r) : r(_r) {}
-		void operator <<(std::function<void()> &&f) {
-			loop.spawn(std::forward<std::function<void()>>(f), r); }
+		await_t() : rendezvous_t(&async::loop), done(false) {}
 	};
 
 	// High-level async constructs
@@ -243,7 +233,7 @@ namespace team {
 	}
 }
 
-rendezvous_t * const __r = nullptr;
+basic_rendezvous_t const __r{async::loop};
 
 // Ugly. Open to ideas.
 
