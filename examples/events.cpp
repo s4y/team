@@ -5,17 +5,13 @@ using namespace team;
 
 int main() {
 
-	int i;
-	auto ev = mkevent(i);
+	event<int> ev;
 
 	async {
-		sleep(1);
-		ev->trigger(1);
-		log("Fired!");
+		log("Waiting...");
+		log("Got ", ev.get());
 	};
 
-	log("Waiting...");
-	ev->wait();
-	log("Got ", i);
+	ev.trigger(1);
 
 }

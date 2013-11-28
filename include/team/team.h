@@ -3,6 +3,7 @@
 #include "event_loop.h"
 #include "rendezvous.h"
 #include "timer.h"
+#include "event.h"
 
 namespace team {
 	struct await_t : public rendezvous_t {
@@ -13,60 +14,6 @@ namespace team {
 
 	// High-level async constructs
 
-	class fence {
-		context_t ctx;
-		public:
-		fence(fence &&) = default;
-		fence() = default;
-		~fence() { loop.blockOnce(&ctx); }
-		void wait() { ctx.yield(&loop); }
-	};
-
-	class fence_queue {
-		std::queue<std::unique_ptr<fence>> q;
-
-		public:
-		void wait() { q.emplace(new fence); q.back()->wait(); }
-		void maybe_pop() {
-			if (q.empty()) return;
-			// The fence will be destroyed when *after* it's been removed from
-			// the queue. Else, we'll yield to the fence inside queues.pop()
-			// and it may destroy us and reenter the fence's destructor
-			auto fence = std::move(q.front());
-			q.pop();
-		}
-
-		operator bool() { return !q.empty(); }
-	};
-
-	template <typename ...S>
-	class event {
-		std::tuple<S&...> slots;
-		context_t ctx;
-		bool triggered, waiting;
-
-		public:
-		event(S &...s) : slots(s...), triggered(false), waiting(false) {}
-
-		template <typename ...T>
-		void trigger(T &&...t) {
-			slots = std::forward_as_tuple(t...);
-			triggered = true;
-			if (waiting) loop.blockOnce(&ctx);
-		}
-
-		void wait() {
-			if (triggered) return;
-			waiting = true;
-			ctx.yield(&loop);
-			waiting = false;
-		}
-	};
-
-	template <typename ...T>
-	auto mkevent(T &...t) -> std::shared_ptr<event<T...>> {
-		return std::make_shared<event<T...>>(t...);
-	}
 
 	template <typename T>
 	class channel {
