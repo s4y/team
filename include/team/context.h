@@ -30,7 +30,7 @@ public:
 	template<typename... Args> void prepare(void(cb)(), Args... args) {
 		makecontext(&m_ctx, cb, sizeof...(args), args...);
 	}
-	virtual ~context_t() {}
+	virtual ~context_t() = default;
 	context_t() = default;
 	context_t(context_t &&) = default;
 
@@ -62,7 +62,6 @@ namespace team {
 		}
 
 		~stack() {
-			fprintf(stderr, "munmap\n");
 			munmap(data, SIGSTKSZ + getpagesize());
 		}
 
