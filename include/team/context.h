@@ -93,7 +93,7 @@ public:
 	void run() {
 		if (d) d->started(this);
 		f();
-		delete this;
+		// delete this;
 		// Isn't this bad? We just deleted our stack and ourself.
 		if (d) d->stopped(this);
 		yield(m_parent);
