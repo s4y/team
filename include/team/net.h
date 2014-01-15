@@ -8,24 +8,22 @@ namespace team {
 	std::shared_ptr<struct addrinfo> getaddrinfo(
 		const char* node, const char* service, const struct addrinfo* hints
 	) {
-		std::shared_ptr<struct addrinfo> ret;
-		auto ev(mkevent(ret));
+		event<std::shared_ptr<struct addrinfo>> ev;
 		uv_getaddrinfo_t h;
 
-		h.data = ev.get();
+		h.data = &ev;
 
 		int err = uv_getaddrinfo(loop.uv, &h,
 			[](uv_getaddrinfo_t *req, int status, struct addrinfo *res) {
-				static_cast<decltype(ev.get())>(req->data)->trigger(
-					res ? decltype(ret)(res, uv_freeaddrinfo) : nullptr
+				static_cast<decltype(ev)*>(req->data)->trigger(
+					res ? decltype(ev)::type(res, uv_freeaddrinfo) : nullptr
 				);
 			}, node, service, hints
 		);
 
 		if (err) abort(); // TODO throw
 
-		ev->wait();
-		return ret;
+		return ev.get();
 	}
 
 	// Base buffer. Does not copy or free its contents. Good for const char *s.

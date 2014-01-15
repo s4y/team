@@ -1,29 +1,42 @@
-struct basic_rendezvous_t {
-	env_t &loop;
+namespace team {
 
-	void operator <<(std::function<void()> &&f) const {
-		loop.spawn(std::forward<std::function<void()>>(f), nullptr);
-	}
-};
+	struct basic_rendezvous {
+		env &loop;
 
-class rendezvous_t : private context_t, public coroutine_t::delegate {
+		void operator <<(std::function<void()> &&f) const {
+			loop.spawn(std::forward<std::function<void()>>(f), nullptr);
+		}
+	};
 
-	env_t *m_loop;
-	unsigned int m_count;
-	bool m_waiting;
-public:
-	rendezvous_t(env_t *loop) :
-		m_loop(loop), m_count(0), m_waiting(false) {}
+	class rendezvous : public coroutine::delegate {
 
-	void started(coroutine_t *) override { m_count++; }
-	void stopped(coroutine_t *) override { m_count--; if (m_waiting) load(); }
+		env *m_loop;
+		context *m_ctx;
+		unsigned int m_count;
+		bool m_waiting;
 
-	void operator <<(std::function<void()> &&f)
-	{ m_loop->spawn(std::forward<std::function<void()>>(f), this); }
+	public:
 
-	~rendezvous_t() {
-		m_waiting = true;
-		while (m_count) this->yield(m_loop);
-	}
-};
+		rendezvous(env *loop) :
+			m_loop(loop), m_count(0), m_waiting(false) {}
 
+		void started(coroutine *) override { m_count++; }
+		void stopped(coroutine *, std::function<void()> &&post) override {
+			m_count--;
+			if (m_waiting) {
+				current_context->yield(m_ctx, std::move(post));
+				abort();
+			}
+		}
+
+		void operator <<(std::function<void()> &&f)
+		{ m_loop->spawn(std::forward<std::function<void()>>(f), this); }
+
+		~rendezvous() {
+			m_waiting = true;
+			m_ctx = current_context;
+			while (m_count) current_context->yield(*m_loop);
+		}
+	};
+
+}

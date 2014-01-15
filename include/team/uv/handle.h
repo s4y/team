@@ -1,6 +1,5 @@
 #pragma once
 
-#include "event_loop.h"
 #include <stdlib.h>
 
 namespace team {

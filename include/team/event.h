@@ -7,19 +7,21 @@ namespace team {
 	template <>
 	class event<> {
 		bool triggered;
-		fence_queue waiters;
+		context *ctx;
 
 		public:
-		event(bool _triggered = false) : triggered(_triggered) {}
+		event(bool _triggered = false) : triggered(_triggered), ctx(nullptr) {}
 
 		void trigger() {
 			triggered = true;
-			while (waiters) { waiters.maybe_pop(); }
+			if (ctx) loop.blockOnce(ctx);
 		}
 
 		void wait() {
 			if (triggered) return;
-			waiters.wait();
+			assert(!ctx);
+			ctx = current_context;
+			ctx->yield(loop);
 		}
 	};
 
@@ -28,10 +30,13 @@ namespace team {
 		std::unique_ptr<T> value;
 
 		public:
-		event() {}
+
+		typedef T type;
+
+		event() : event<>() {}
 
 		template <typename ...Args>
-		event(Args &&...args) {
+		event(Args &&...args) : event() {
 			trigger(std::forward<Args>(args)...);
 		}
 
@@ -41,9 +46,9 @@ namespace team {
 			event<>::trigger();
 		}
 
-		T &get() {
+		T &&get() {
 			if (!value) { event<>::wait(); }
-			return *value;
+			return std::move(*value);
 		}
 	};
 

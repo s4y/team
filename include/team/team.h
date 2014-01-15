@@ -3,76 +3,23 @@
 #include "event_loop.h"
 #include "rendezvous.h"
 #include "timer.h"
-#include "event.h"
+#include "channel.h"
 
 namespace team {
-	struct await_t : public rendezvous_t {
+	struct await_t : public rendezvous {
 		bool done;
 
-		await_t() : rendezvous_t(&team::loop), done(false) {}
+		await_t() : rendezvous(&team::loop), done(false) {}
 	};
 
 	// High-level async constructs
 
-
-	template <typename T>
-	class channel {
-
-		std::queue<T> values;
-		size_t max_size;
-		bool closed;
-
-		fence_queue senders;
-		fence_queue receivers;
-
-		public:
-		explicit channel(size_t _max_size) : max_size(_max_size), closed(false) {}
-		channel() : channel(0) {}
-		channel(channel &&) = default;
-
-		template <typename Val>
-		void send(Val &&v) {
-			if (closed) abort(); // TODO: throw
-			while (!receivers && values.size() == max_size) {
-				senders.wait();
-			}
-
-			values.push(std::forward<Val>(v));
-			receivers.maybe_pop();
-		}
-
-		T recv() {
-			while (!senders && !values.size()) {
-				if (closed) return T();
-				receivers.wait();
-			}
-			senders.maybe_pop();
-			auto ret = std::move(values.front());
-			values.pop();
-			return ret;
-		}
-
-		template <typename Val>
-		channel &operator<<(Val &&v) { send(std::forward<Val>(v)); return *this; }
-
-		template <typename Val>
-		channel &operator>>(Val &v) { v = recv(); return *this; }
-
-		T operator*() { return recv(); }
-
-		void close() {
-			closed = true;
-			while (receivers) receivers.maybe_pop();
-		}
-	};
-
 	template <typename T>
 	class generator {
-		coroutine_t *gen;
+		coroutine *gen;
 
 		channel<std::unique_ptr<T>> channel;
 		bool running;
-		context_t ctx;
 
 		protected:
 
@@ -94,7 +41,7 @@ namespace team {
 		typedef T value_type;
 
 		generator() : gen(
-			new coroutine_t(&loop, std::bind(&generator::start, this), nullptr)
+			new coroutine(std::bind(&generator::start, this), nullptr)
 		), channel(1), running(false), over(false) { }
 
 		auto operator()() -> decltype(channel.recv()) {
@@ -182,7 +129,7 @@ namespace team {
 	}
 }
 
-basic_rendezvous_t const __r{team::loop};
+team::basic_rendezvous const __r{team::loop};
 
 // Ugly. Open to ideas.
 
