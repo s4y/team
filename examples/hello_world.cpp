@@ -16,6 +16,8 @@ int main() {
 	// Let's pretend to fetch ten users/emails/kittens, at the same time.
 	await {
 		for (size_t i = 0; i < results.size(); i++) {
+			// C++11 lambdas can explicitly capture by value from their enclosing scope.
+			// The value of `i` will be correct for each task.
 			acall [&,i] { results[i] = work(i); };
 		}
 	}
