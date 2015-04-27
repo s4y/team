@@ -51,6 +51,8 @@ namespace team {
 		std::vector<std::shared_ptr<buffer>> bufs;
 		size_t size;
 
+		std::vector<std::string> hold_strings;
+
 		bufstream() : size(0) {}
 
 		bufstream &operator <<(const char *s) {
@@ -76,6 +78,11 @@ namespace team {
 			bufs.emplace_back(new buffer((char *)s.c_str(), s.size()));
 			size += bufs.back()->len;
 			return *this;
+		}
+
+		bufstream &operator <<(const std::string &&s_in) {
+			hold_strings.push_back(std::move(s_in));
+			return *this << hold_strings.back();
 		}
 
 		template <typename T, typename ...Args>
@@ -134,6 +141,16 @@ namespace team {
 			if (err) {
 				fprintf(stderr, "Failed to accept a connection (%d)\n", err);
 			}
+		}
+
+		bool connect(const sockaddr_in &addr) {
+			uv_connect_t connect;
+			event<bool> ev;
+			connect.data = &ev;
+			uv_tcp_connect(&connect, m_handle, addr, [] (uv_connect_t *c, int status) {
+				static_cast<event<bool>*>(c->data)->trigger(status == 0);
+			});
+			return ev.get();
 		}
 
 		auto read() -> decltype(ch.recv()) {
