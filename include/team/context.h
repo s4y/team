@@ -9,7 +9,7 @@
 #include <queue>
 #include <functional>
 #include <stdlib.h>
-#include <uv.h>
+#include <uv/uv.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <assert.h>
