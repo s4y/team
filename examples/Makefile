@@ -18,14 +18,16 @@ CXXFLAGS += -g
 
 examples: $(EXAMPLES)
 
-bin/%: %.cpp ../include/team util.h deps/uv/libuv.a deps/http-parser/http_parser_g.o
+bin/%: %.cpp $(shell find ../include/team -type f) util.h deps/uv/libuv.a deps/http-parser/http_parser_g.o
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 deps/uv/libuv.a: deps/uv/Makefile
 	$(MAKE) -C $(@D)
 
 deps/http-parser/http_parser_g.o: deps/http_parser/Makefile
-	$(MAKE) -C $(@D)
+	$(MAKE) -C $(@D) http_parser_g.o
 
-deps/uv/Makefile deps/http_parser/Makefile:
+deps/uv/Makefile: ../.gitmodules
 	git submodule init && git submodule update
+
+deps/http_parser/Makefile: deps/uv/Makefile

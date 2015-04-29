@@ -1,8 +1,14 @@
 #pragma once
 
 #include <stdlib.h>
+#include <uv/uv.h>
 
 namespace team {
+
+namespace uv { namespace details {
+	template<typename T, typename ...Args>
+	void init(uv_loop_t *, T *, Args &&...);
+} }
 
 template<typename T, typename CT = T>
 struct handle {
@@ -25,18 +31,11 @@ struct handle {
 
 	T *m_handle;
 
-	void init(void *p) { m_handle->data = p; }
-
-	template <int(*Init)(uv_loop_t*, T *handle)>
-	void init(uv_loop_t *loop, void *p) {
-		if (int ret = Init(loop, m_handle)) {
-			fprintf(stderr, "libuv handle init failed with %d\n", ret);
-			exit(1);
-		}
-		init(p);
+	template <typename ...Args>
+	handle(uv_loop_t *loop, Args &&...args) : m_handle(new T) {
+		uv::details::init(loop, m_handle, std::forward<Args>(args)...);
+		m_handle->data = this;
 	}
-
-	handle() : m_handle(new T) {}
 
 	~handle() {
 		uv_close((uv_handle_t*)m_handle, [](uv_handle_t *h){ delete h; });

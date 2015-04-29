@@ -7,7 +7,7 @@ const char *ip = "127.0.0.1";
 const int port = 8080;
 
 int main() {
-	team::listening_socket_tcp sock(ip, port);
+	team::socket_tcp sock{ip, port};
 	log("Listening on ", ip, ":", port);
 
 	// You can call accept() and read() with no arguments (blocking-style) or
