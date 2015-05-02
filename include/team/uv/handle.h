@@ -7,7 +7,7 @@ namespace team {
 
 namespace uv { namespace details {
 	template<typename T, typename ...Args>
-	void init(uv_loop_t *, T *, Args &&...);
+	void init(uv_loop_t *, T *, Args ...);
 } }
 
 template<typename T, typename CT = T>

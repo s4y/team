@@ -10,6 +10,11 @@ namespace team {
 		void init<uv_tcp_t>(uv_loop_t *loop, uv_tcp_t *handle) {
 			uv_tcp_init(loop, handle);
 		}
+
+		template <>
+		void init<uv_pipe_t>(uv_loop_t *loop, uv_pipe_t *handle, bool ipc) {
+			uv_pipe_init(loop, handle, ipc);
+		}
 	} }
 
 
@@ -111,71 +116,16 @@ namespace team {
 		};
 	}
 
-	template <typename Pipe=uv_pipe_t, typename Client=Pipe>
+	template <typename Pipe=uv_pipe_t>
 	class pipe : public handle<Pipe, uv_stream_t> {
-		public:
-		typedef std::unique_ptr<Client> client_type;
-
-		private:
-		channel<client_type> ch;
+		channel<> listen_ch;
+		channel<std::unique_ptr<buffer>> read_ch;
+		bool reading{false}, want_read{false};
 
 		void listen_cb(uv_stream_t *handle, int status) {
-			(void)handle;
-			(void)status;
 			// TODO: like read, stop listen if not accepted again
-			async {
-				ch.send(std::unique_ptr<Client>(new Client(*this)));
-			};
+			async { listen_ch.send(); };
 		}
-
-		public:
-		pipe() : handle<Pipe, uv_stream_t>(loop.uv) {}
-
-		explicit pipe(pipe &from) : pipe() {
-			int err = uv_accept(reinterpret_cast<uv_stream_t *>(from.m_handle), (uv_stream_t*)this->m_handle);
-			if (err) {
-				fprintf(stderr, "Failed to accept a connection (%d)\n", err);
-			}
-		}
-
-
-		void listen(int backlog) {
-			if (int err = uv_listen(
-				(uv_stream_t*)this->m_handle, backlog,
-				handle<Pipe, Client>::template TEAM_UV_CALLBACK(uv_stream_t, pipe::listen_cb)
-			)) {
-				// TODO: Expose errors. Throw an exception?
-				fprintf(stderr, "Failed to listen (%d) \n", err);
-			}
-		}
-
-		client_type accept() { return ch.recv(); }
-
-		void accept(std::function<void(client_type)> cb) {
-			while (auto client = accept()) {
-				async { cb(std::move(client)); };
-			}
-		}
-	};
-
-	class socket_tcp : public pipe<uv_tcp_t, socket_tcp> {
-		public:
-		uv_err_code err;
-
-		socket_tcp(const char *ip, int port, int backlog = 128) {
-			if (int err = uv_tcp_bind(this->m_handle, uv_ip4_addr(ip, port))) {
-				// TODO: Expose errors. Throw an exception?
-				fprintf(stderr, "Failed to bind to %s:%d (%d) \n", ip, port, err);
-			} else {
-				listen(backlog);
-			}
-		}
-
-		explicit socket_tcp(pipe &from) : pipe(from) {}
-
-		private:
-		channel<std::unique_ptr<buffer>> ch;
-		bool reading, want_read;
 
 		void read_cb(uv_stream_t *stream, ssize_t nread, uv_buf_t buf) {
 			if (nread == 0) {
@@ -186,7 +136,7 @@ namespace team {
 			if (nread > 0) {
 				err = UV_OK;
 				buf.len = nread;
-				async { ch.send(std::unique_ptr<buffer>(new tmp_buffer(std::move(buf)))); };
+				async { read_ch.send(std::unique_ptr<buffer>(new tmp_buffer(std::move(buf)))); };
 				if (!want_read) {
 					reading = false;
 					uv_read_stop(stream);
@@ -194,12 +144,83 @@ namespace team {
 			} else {
 				auto last_error = uv_last_error(loop.uv).code;
 				err = last_error == UV_EOF ? UV_OK : err;
-				async { ch.send(nullptr); };
+				async { read_ch.send(nullptr); };
 			}
 		}
 
+
 		public:
-		socket_tcp() : pipe(), reading(false), want_read(false) {}
+		uv_err_code err;
+
+		pipe(bool ipc = false) : handle<Pipe, uv_stream_t>(loop.uv, ipc) {}
+
+		explicit pipe(pipe &from) : pipe() {
+			int err = uv_accept(reinterpret_cast<uv_stream_t *>(from.m_handle), (uv_stream_t*)this->m_handle);
+			if (err) {
+				fprintf(stderr, "Failed to accept a connection (%d)\n", err);
+			}
+		}
+
+		void open(int fd) {
+			uv_pipe_open(this->m_handle, fd);
+		}
+
+		void listen(int backlog) {
+			if (int err = uv_listen(
+				(uv_stream_t*)this->m_handle, backlog,
+				handle<Pipe, uv_stream_t>::template TEAM_UV_CALLBACK(uv_stream_t, pipe::listen_cb)
+			)) {
+				// TODO: Expose errors. Throw an exception?
+				fprintf(stderr, "Failed to listen (%d) \n", err);
+			}
+		}
+
+		template <typename T>
+		std::unique_ptr<T> accept() {
+			listen_ch.recv();
+			return std::unique_ptr<T>(new T(*this));
+		}
+
+		template <typename T>
+		void accept(std::function<void(std::unique_ptr<T>)> cb) {
+			while (auto client = accept<T>()) {
+				async { cb(std::move(client)); };
+			}
+		}
+
+		auto read() -> decltype(read_ch.recv()) {
+			if (!reading) {
+				reading = true;
+				uv_read_start(
+					(uv_stream_t*)this->m_handle, tmp_buffer::alloc,
+					handle<Pipe, uv_stream_t>::template TEAM_UV_CALLBACK(uv_stream_t, pipe::read_cb)
+				);
+			}
+			want_read = true;
+			return read_ch.recv();
+		}
+
+		void read(std::function<void(decltype(read_ch.recv()))> cb) {
+			while (auto data = read()) {
+				async { cb(std::move(data)); };
+			}
+		}
+
+	};
+
+	class socket_tcp : public pipe<uv_tcp_t> {
+		socket_tcp() : pipe() {}
+
+		socket_tcp(const char *ip, int port, int backlog = 128): socket_tcp() {
+			if (int err = uv_tcp_bind(this->m_handle, uv_ip4_addr(ip, port))) {
+				// TODO: Expose errors. Throw an exception?
+				fprintf(stderr, "Failed to bind to %s:%d (%d) \n", ip, port, err);
+			} else {
+				listen(backlog);
+			}
+		}
+
+		explicit socket_tcp(pipe &from) : pipe(from) {}
 
 		bool connect(const sockaddr_in &addr) {
 			uv_connect_t connect;
@@ -209,24 +230,6 @@ namespace team {
 				static_cast<event<bool>*>(c->data)->trigger(status == 0);
 			});
 			return ev.get();
-		}
-
-		auto read() -> decltype(ch.recv()) {
-			if (!reading) {
-				reading = true;
-				uv_read_start(
-					(uv_stream_t*)this->m_handle, tmp_buffer::alloc,
-					TEAM_UV_CALLBACK(uv_stream_t, socket_tcp::read_cb)
-				);
-			}
-			want_read = true;
-			return ch.recv();
-		}
-
-		void read(std::function<void(decltype(ch.recv()))> cb) {
-			while (auto data = read()) {
-				async { cb(std::move(data)); };
-			}
 		}
 
 		void write(std::vector<std::shared_ptr<buffer>> &&bufs) {
